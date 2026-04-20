@@ -1,0 +1,19 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, -apple-system, sans-serif !important;
+}
+
+.dropdown-item.active {
+    background-color: rgb(255, 255, 255) !important;
+    color: black;
+}
+
+.dropdown-item:hover {
+    background-color: rgb(204, 204, 204) !important;
+    /* color: black; */
+}
