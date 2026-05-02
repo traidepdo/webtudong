@@ -28,11 +28,11 @@ const Register = () => {
     };
     const handleNextStep = (e) => {
         e.preventDefault();
-        if (formData.username && formData.password) {
+        if (formData.email && formData.password) {
             setstep(2);
         }
         else {
-            alert("Vui lòng điền tài khoản và mật khẩu");
+            alert("Vui lòng điền email và mật khẩu");
         }
     }
 
@@ -72,10 +72,6 @@ const Register = () => {
                             <div className="form-group">
                                 <label>Email</label>
                                 <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="email@example.com" />
-                            </div>
-                            <div className="form-group">
-                                <label>Tên đăng nhập</label>
-                                <input type="text" name="username" value={formData.username} onChange={handleChange} required placeholder="username" />
                             </div>
                             <div className="form-group">
                                 <label>Mật khẩu</label>

@@ -12,6 +12,8 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from 'react-router-dom';
 import Event from "./pages/event";
 
+import AdminDashboard from "./pages/AdminDashboard";
+
 function App() {
   const [scrolled, setScrolled] = useState(false);
 
@@ -24,12 +26,22 @@ function App() {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-  function ProtectedRoute({ children }) {
+
+  function ProtectedRoute({ children, adminOnly = false }) {
     const location = useLocation();
-    const token = localStorage.getItem('access_token')
+    const token = localStorage.getItem('access_token');
+    const { user, loading } = useAuth();
+
+    if (loading) return <div>Đang tải...</div>;
+
     if (!token) {
       return <Navigate to="/login" state={{ from: location }} replace />
     }
+
+    if (adminOnly && user && !user.is_staff) {
+      return <Navigate to="/" replace />
+    }
+
     return children
   }
 
@@ -46,6 +58,13 @@ function App() {
             <Route path="/event" element={<Event />} />
             <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin-dashboard" element={
+              <ProtectedRoute adminOnly={true}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
           </Routes>
         </BrowserRouter>
       </CartProvider>

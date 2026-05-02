@@ -1,5 +1,5 @@
 import Header from "../components/Header";
-import Footer from "../components/footer";
+import Footer from "../components/Footer";
 import "../App.css"
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -15,6 +15,7 @@ function Home({ scrolled }) {
     const [product, setProduct] = useState([]);
     const [filter, setFilter] = useState([]);
     const [categoryProducts, setCategoryProducts] = useState([]);
+
     useEffect(() => {
         axios.get("http://127.0.0.1:8000/api/products/")
             .then(res => setProduct(res.data))
@@ -40,6 +41,7 @@ function Home({ scrolled }) {
             mirror: true
         });
     }, []);
+
 
     const [index, setIndex] = useState(0);
     const slides = [
@@ -137,10 +139,11 @@ function Home({ scrolled }) {
                     <button className="prev" onClick={prevSlides}>❮</button>
                     <button className="next" onClick={nextSlides}>❯</button>
                 </section>
+
                 <section class="new-product">
                     <div class="new-product-content">
                         <div class="new-product-title">
-                            <h1>Sản phẩm mới</h1>
+                            <h1 style={{ fontWeight: 600 }}>Sản phẩm mới</h1>
                         </div>
                         <div className="new-product-list">
                             {product.map(item => (
@@ -148,7 +151,7 @@ function Home({ scrolled }) {
                             ))}
                         </div>
                         <div class="view-more">
-                            <a href="">Xem thêm</a>
+                            <a href="/products">Xem thêm</a>
                         </div>
                     </div>
                 </section>
@@ -235,50 +238,8 @@ function Home({ scrolled }) {
                         ))}
                     </div>
                 </section>
-                <section class="main-footer">
-                    <div class="content">
-                        <div class="footer-left">
-                            <div class="footer-logo">
-                                <a href="#">Routine</a>
-                            </div>
-                            <div class="footer-text">
-                                <p>Routine.vn không chỉ đơn thuần là một nền tảng thương mại điện tử, mà là một không gian nghệ thuật
-                                    trực tuyến, nơi phong cách thanh lịch và nhịp sống hiện đại giao thoa. Đại diện cho tư duy thời
-                                    trang
-                                    "Look Smart" – tinh giản, sắc sảo và đầy tính ứng dụng, website của Routine mang đến cho giới mộ
-                                    điệu
-                                    một lăng kính mới về thời trang Việt Nam cao cấp, được chế tác tỉ mỉ để tôn vinh vóc dáng người Á
-                                    Đông.</p>
-                            </div>
-                        </div>
-                        <div class="footer-right">
-                            <div class="news">
-                                <div class="title">
-                                    <h1>Tin tức</h1>
-                                </div>
-                                <div class="news-list">
-                                    <div class="cart">
-                                        <img src="https://pos.nvncdn.com/8073c5-83109/art/20230505_pikIC5EZ.jpeg?v=1683250342" alt=""
-                                        />
-                                        <span>Thời trang công sở</span>
-                                    </div>
-                                    <div class="cart">
-                                        <img src="https://pos.nvncdn.com/8073c5-83109/art/20230505_pikIC5EZ.jpeg?v=1683250342" alt=""
-                                        />
-                                        <span>Thời trang công sở</span>
-                                    </div>
-                                    <div class="cart">
-                                        <img src="https://pos.nvncdn.com/8073c5-83109/art/20230505_pikIC5EZ.jpeg?v=1683250342" alt=""
-                                        />
-                                        <span>Thời trang công sở</span>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
             </main>
+
             <Footer />
         </div >
     );

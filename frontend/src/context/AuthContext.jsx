@@ -25,8 +25,10 @@ export const AuthProvider = ({ children }) => {
         checkUser();
     }, []);
 
-    const login = async (username, password) => {
-        const res = await api.post('/login/', { username, password });
+    const login = async (email, password) => {
+        // SimpleJWT TokenObtainPairView expects 'username' field by default.
+        // Our EmailBackend will handle the email correctly even if passed as 'username'.
+        const res = await api.post('/login/', { username: email, password });
         localStorage.setItem('access_token', res.data.access);
         localStorage.setItem('refresh_token', res.data.refresh);
         const userRes = await api.get('/profile/');

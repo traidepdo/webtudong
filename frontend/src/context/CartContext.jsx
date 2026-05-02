@@ -18,7 +18,7 @@ export const CartProvider = ({ children }) => {
         setCartItems(prev => {
             const existing = prev.find(item => item.id === product.id);
             if (existing) {
-                return prev.map(item => 
+                return prev.map(item =>
                     item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
                 );
             }
@@ -35,7 +35,7 @@ export const CartProvider = ({ children }) => {
     };
 
     const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-    
+
     const totalAmount = cartItems.reduce((acc, item) => {
         const price = parseFloat(item.price || item.base_price || 0);
         return acc + (price * item.quantity);

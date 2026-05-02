@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import api from '../api';
 import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
+import Suggestion from '../components/Suggestion';
 
 const ProductDetail = () => {
     const { slug } = useParams();
@@ -95,7 +96,7 @@ const ProductDetail = () => {
             return;
         }
 
-        addToCart(product);
+        addToCart({ ...product, price: price, }, quantity);
         alert('Đã thêm vào giỏ hàng!');
     };
     function getprice(colorId) {
@@ -202,8 +203,16 @@ const ProductDetail = () => {
                             <input type="text" value={quantity} readOnly />
                             <button className="quantity-btn" onClick={() => setQuantity(quantity + 1)}>+</button> */}
                             <button className="quantity-btn" onClick={() => setQuantity(quantity + 1)}><i className="bi bi-plus"></i></button>
-                            <input type="text" value={quantity} onChange={e => setQuantity(e.target.value)} />
-                            <button className="quantity-btn" onClick={() => setQuantity(quantity - 1)}><i className="bi bi-dash"></i></button>
+                            <input type="text" value={quantity} onChange={e => {
+                                const val = parseInt(e.target.value);
+                                if (!isNaN(val) && val >= 1) {
+                                    setQuantity(val);
+                                }
+                                else if (e.target.value === "") {
+                                    setQuantity(0);
+                                }
+                            }} />
+                            <button className="quantity-btn" onClick={() => setQuantity(Math.max(1, quantity - 1))}><i className="bi bi-dash"></i></button>
                         </div>
                     </div>
 
@@ -222,6 +231,7 @@ const ProductDetail = () => {
                     </div>
                 </div>
             </main>
+            <Suggestion category={product.category} />
             <Footer />
             <style jsx>{`
                 .product-detail-page { background: #fff; min-height: 100vh; }

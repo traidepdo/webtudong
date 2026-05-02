@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const { login } = useAuth();
@@ -13,10 +13,14 @@ const Login = () => {
         e.preventDefault();
         setError('');
         try {
-            await login(username, password);
-            navigate('/');
+            const user = await login(email, password);
+            if (user.is_staff) {
+                navigate('/admin-dashboard');
+            } else {
+                navigate('/');
+            }
         } catch (err) {
-            setError('Tên đăng nhập hoặc mật khẩu không đúng');
+            setError('Email hoặc mật khẩu không đúng');
         }
     };
 
@@ -27,13 +31,13 @@ const Login = () => {
                 <p>Vui lòng đăng nhập để tiếp tục</p>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label>Tên đăng nhập</label>
+                        <label>Email</label>
                         <input 
-                            type="text" 
-                            value={username} 
-                            onChange={(e) => setUsername(e.target.value)} 
+                            type="email" 
+                            value={email} 
+                            onChange={(e) => setEmail(e.target.value)} 
                             required 
-                            placeholder="Nhập username"
+                            placeholder="Nhập email của bạn"
                         />
                     </div>
                     <div className="form-group">
