@@ -1,9 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
+import AdminProducts from '../components/admin/AdminProducts';
+import AdminOrders from '../components/admin/AdminOrders';
+import AdminUsers from '../components/admin/AdminUsers';
+import Category from '../components/admin/AdminCategory';
+import api from '../api';
+
+const AdminOverview = ({ user }) => {
+    const [stats, setStats] = useState({ total_orders: 0, total_revenue: 0, total_users: 0 });
+
+    useEffect(() => {
+        api.get('admin/stats/').then(res => setStats(res.data)).catch(console.error);
+    }, []);
+
+    return (
+        <div className="admin-overview">
+            <header>
+                <h1>Chào mừng, {user?.first_name || 'Admin'}</h1>
+            </header>
+            <div className="stats-grid">
+                <div className="stat-card">
+                    <h3>Tổng đơn hàng</h3>
+                    <p>{stats.total_orders}</p>
+                </div>
+                <div className="stat-card">
+                    <h3>Tổng doanh thu</h3>
+                    <p>{Number(stats.total_revenue).toLocaleString()}đ</p>
+                </div>
+                <div className="stat-card">
+                    <h3>Tổng người dùng</h3>
+                    <p>{stats.total_users}</p>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const AdminDashboard = () => {
     const { user, logout } = useAuth();
+    const [activeSection, setActiveSection] = useState('overview');
 
     if (user && !user.is_staff) {
         return <Navigate to="/" />;
@@ -15,32 +51,50 @@ const AdminDashboard = () => {
                 <div className="admin-logo">Admin Panel</div>
                 <nav>
                     <ul>
-                        <li>Dashboard</li>
-                        <li>Sản phẩm</li>
-                        <li>Đơn hàng</li>
-                        <li>Người dùng</li>
+                        <li
+                            className={activeSection === 'overview' ? 'active' : ''}
+                            onClick={() => setActiveSection('overview')}
+                        >
+                            Tổng quan
+                        </li>
+                        <li
+                            className={activeSection === 'products' ? 'active' : ''}
+                            onClick={() => setActiveSection('products')}
+                        >
+                            Sản phẩm
+                        </li>
+                        <li
+                            className={activeSection === 'orders' ? 'active' : ''}
+                            onClick={() => setActiveSection('orders')}
+                        >
+                            Đơn hàng
+                        </li>
+                        <li
+                            className={activeSection === 'users' ? 'active' : ''}
+                            onClick={() => setActiveSection('users')}
+                        >
+                            Người dùng
+                        </li>
+                        <li
+                            className={activeSection === 'categories' ? 'active' : ''}
+                            onClick={() => setActiveSection('categories')}
+                        >
+                            Danh mục
+                        </li>
                     </ul>
                 </nav>
                 <button onClick={logout} className="logout-btn">Đăng xuất</button>
             </aside>
+
             <main className="admin-content">
-                <header>
-                    <h1>Chào mừng, {user?.first_name || 'Admin'}</h1>
-                </header>
-                <div className="stats-grid">
-                    <div className="stat-card">
-                        <h3>Tổng đơn hàng</h3>
-                        <p>150</p>
-                    </div>
-                    <div className="stat-card">
-                        <h3>Tổng doanh thu</h3>
-                        <p>50.000.000đ</p>
-                    </div>
-                    <div className="stat-card">
-                        <h3>Khách hàng mới</h3>
-                        <p>12</p>
-                    </div>
-                </div>
+                {/* ✅ FIX: Render trực tiếp thay vì dùng renderContent()
+                    Cách cũ dùng function call khiến React unmount/mount lại component
+                    mỗi khi AdminDashboard re-render → scroll bị reset về đầu trang */}
+                {activeSection === 'overview' && <AdminOverview user={user} />}
+                {activeSection === 'products' && <AdminProducts />}
+                {activeSection === 'orders' && <AdminOrders />}
+                {activeSection === 'users' && <AdminUsers />}
+                {activeSection === 'categories' && <Category />}
             </main>
 
             <style>{`
@@ -74,7 +128,7 @@ const AdminDashboard = () => {
                     cursor: pointer;
                     transition: background 0.3s;
                 }
-                .admin-sidebar nav ul li:hover {
+                .admin-sidebar nav ul li:hover, .admin-sidebar nav ul li.active {
                     background: #34495e;
                 }
                 .logout-btn {

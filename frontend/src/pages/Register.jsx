@@ -12,7 +12,7 @@ const Register = () => {
         last_name: '',
         phone_number: '',
         address: '',
-        birth_date: '',
+        date_of_birth: '',
     });
     const [error, setError] = useState('');
     const { register } = useAuth();
@@ -40,8 +40,8 @@ const Register = () => {
         e.preventDefault();
         const data = new FormData();
         Object.keys(formData).forEach(key => {
-            // Đảm bảo birth_date không bị null/undefined khi gửi
-            if (key === 'birth_date' && !formData[key]) {
+            // Đảm bảo date_of_birth không bị null/undefined khi gửi
+            if (key === 'date_of_birth' && !formData[key]) {
                 return;
             }
             data.append(key, formData[key]);
@@ -105,7 +105,7 @@ const Register = () => {
                             </div>
                             <div className="form-group">
                                 <label>Ngày sinh</label>
-                                <input type="date" name="birth_date" value={formData.birth_date} onChange={handleChange} required placeholder="Ngày sinh" />
+                                <input type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} required placeholder="Ngày sinh" />
                             </div>
                             <div className="form-group">
                                 <label>Ảnh đại diện</label>

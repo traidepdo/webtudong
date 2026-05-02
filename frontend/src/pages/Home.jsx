@@ -30,7 +30,7 @@ function Home({ scrolled }) {
             setFilter(product);
         }
         else {
-            setFilter(product.filter(item => item.category_name === listProduct));
+            setFilter(product.filter(item => item.category === listProduct));
         }
     }, [listProduct, product])
     useEffect(() => {
@@ -146,7 +146,7 @@ function Home({ scrolled }) {
                             <h1 style={{ fontWeight: 600 }}>Sản phẩm mới</h1>
                         </div>
                         <div className="new-product-list">
-                            {product.map(item => (
+                            {product.slice(0, 4).map(item => (
                                 <ProductCard key={item.id} product={item} />
                             ))}
                         </div>
@@ -213,8 +213,8 @@ function Home({ scrolled }) {
 
                             <li>
                                 <span
-                                    onClick={() => setListProduct("dress")}
-                                    className={listProduct === "dress" ? "active" : ""}
+                                    onClick={() => setListProduct(1)}
+                                    className={listProduct === "1" ? "active" : ""}
                                 >
                                     Váy
                                 </span>

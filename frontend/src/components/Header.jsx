@@ -54,7 +54,9 @@ function Header({ scrolled }) {
                                             to={`/products?category=${c.slug}`}
                                             className={({ isActive }) =>
                                                 "dropdown-item " + (isActive ? "active" : "")
+
                                             }
+                                            onClick={() => document.body.click()}
                                         >
                                             {c.name}
                                         </NavLink>
@@ -85,8 +87,14 @@ function Header({ scrolled }) {
                     {user ? (
                         <div className="user-profile-nav">
                             <Link to="/profile" className="welcome-msg">
-                                <img src={user.avatar} alt="" className="avatar" /> {user.first_name || user.username}
+                                {user.avatar ? (
+                                    <img src={user.avatar} alt="" className="avatar" />
+                                ) :
+                                    (
+                                        <img src="https://cdn-icons-png.flaticon.com/512/11540/11540172.png" alt="" className="avatar" />
+                                    )}
                             </Link>
+                            <p className="d-flex m-0 fw-semibold fs-6">{user.first_name || user.username}</p>
                             <button onClick={logout} className="logout-btn">Đăng xuất</button>
                         </div>
                     ) : (

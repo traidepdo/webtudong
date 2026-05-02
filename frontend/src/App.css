@@ -294,6 +294,9 @@ nav {
     display: flex;
     align-items: center;
     gap: 20px;
+    border: 1px solid black;
+    padding: 5px;
+    border-radius: 40px;
 }
 
 .user-profile-nav a {
@@ -324,7 +327,7 @@ nav {
 
 .logout-btn {
     background: none;
-    border: 1px solid #d2d2d7;
+    /* border: 1px solid #d2d2d7; */
     color: #1d1d1f;
     padding: 6px 16px;
     border-radius: 20px;
@@ -332,11 +335,18 @@ nav {
     font-size: 13px;
     font-weight: 500;
     transition: all 0.3s;
+    border: none;
 }
 
 .logout-btn:hover {
     background: #f5f5f7;
     border-color: #1d1d1f;
+    transform: translateX(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.logout-btn:active {
+    transform: translateX(0px);
 }
 
 .search i {
@@ -731,7 +741,7 @@ main .new-product .new-product-content .view-more a:active {
 }
 
 .color-1 {
-    background: #1c1c1c;
+    background: red;
 }
 
 .color-2 {
@@ -1041,4 +1051,79 @@ footer {
     .nav-links {
         display: none;
     }
+}
+
+
+
+
+
+
+
+
+/* ADMIN */
+.container-homeadmin {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+.container-homeadmin .content {
+    display: flex;
+    flex: 1;
+}
+
+.container-homeadmin .sidebar {
+    display: flex;
+    width: 200px;
+    background: #f4f4f4;
+    padding: 30px 0px;
+    align-items: flex-start;
+}
+
+.container-homeadmin .sidebar ul {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+}
+
+.container-homeadmin .sidebar li {
+    /* margin-bottom: 10px; */
+    width: 100%;
+    height: 100%;
+    /* padding: 10px; */
+}
+
+.container-homeadmin .sidebar .active {
+    background-color: #e2e0e0;
+    /* cursor: pointer; */
+    transition: all 0.3s ease;
+}
+
+.container-homeadmin .sidebar li:hover {
+    background-color: #e2e0e0;
+    /* cursor: pointer; */
+    transition: all 0.3s ease;
+}
+
+.container-homeadmin .sidebar a {
+    text-decoration: none;
+    color: black;
+    pointer-events: auto;
+    /* Đảm bảo dòng này có */
+    display: block;
+    /* Tăng vùng click */
+    width: 100%;
+    padding: 10px;
+}
+
+.container-homeadmin .main {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: 100%;
+    height: 100%;
+    padding: 50px;
+    flex-direction: column;
 }

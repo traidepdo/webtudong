@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import api from '../api';
 import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
-import Suggestion from '../components/Suggestion';
+import ListProduct from '../components/ListProduct';
+import '../product.css';
+
 
 const ProductDetail = () => {
     const { slug } = useParams();
@@ -46,7 +48,13 @@ const ProductDetail = () => {
             setPrice(Number(variant.price));
         }
     }, [product]);
-
+    useEffect(() => {
+        if (!product || !selectedColor || !selectedSize) return;
+        const variant = product.variants.find(
+            v => v.color === selectedColor && v.size === selectedSize
+        );
+        if (variant) setPrice(Number(variant.price));
+    }, [selectedColor, selectedSize]);
     if (loading) return <div className="loading">Đang tải...</div>;
     if (!product) return <div className="error">Không tìm thấy sản phẩm.</div>;
     const formatPrice = (price) => {
@@ -96,14 +104,17 @@ const ProductDetail = () => {
             return;
         }
 
-        addToCart({ ...product, price: price, }, quantity);
+        addToCart({ ...product, price: price, }, quantity, selectedColor, selectedSize, idVariant);
         alert('Đã thêm vào giỏ hàng!');
+
     };
     function getprice(colorId) {
-        const colorclick = colorId;
-        const price = product.variants.find(v => v.color === colorclick)?.price;
-        console.log(colorId)
-        setPrice(price);
+        // Nếu đã chọn size → lấy giá đúng variant (color + size)
+        // Nếu chưa chọn size → lấy giá variant đầu tiên của màu đó
+        const variant = selectedSize
+            ? product.variants.find(v => v.color === colorId && v.size === selectedSize)
+            : product.variants.find(v => v.color === colorId);
+        if (variant) setPrice(Number(variant.price));
     }
 
     function getpriceimage(id) {
@@ -115,9 +126,8 @@ const ProductDetail = () => {
         }
 
     }
-
     const handleQuantityChange = (e) => {
-        console.log(e.target.value);
+        // console.log(e.target.value);
         const value = parseInt(e.target.value);
         if (!isNaN(value) && value < 0) {
             setQuantity(1);
@@ -126,6 +136,9 @@ const ProductDetail = () => {
         }
     };
 
+    const idVariant = product?.variants?.find(p =>
+        p.color === selectedColor && p.size === selectedSize
+    )?.id
     return (
         <div className="product-detail-page">
             <Header scrolled={true} />
@@ -159,41 +172,78 @@ const ProductDetail = () => {
                         <p>{product.description || "Chưa có mô tả cho sản phẩm này."}</p>
                     </div>
 
+                    {/* Màu sắc */}
                     {colors.length > 0 && (
                         <div className="selection-group">
                             <h3>Màu sắc</h3>
                             <div className="options-grid">
-                                {
-                                    colors.map((v) => (
+                                {colors.map((colorId) => {
+                                    // Nếu đã chọn size → chỉ hiện màu có size đó
+                                    const available = selectedSize
+                                        ? product.variants.some(v => v.color === colorId && v.size === selectedSize)
+                                        : true;
+
+                                    return (
                                         <button
-                                            key={v}
-                                            className={`option-btn ${selectedColor === v ? 'active' : ''}`}
-                                            onClick={() => { setSelectedColor(v); image_change(v); getprice(v) }}
-                                            value={v}
+                                            key={colorId}
+                                            className={`option-btn ${selectedColor === colorId ? 'active' : ''} ${!available ? 'disabled' : ''}`}
+                                            onClick={() => {
+                                                if (!available) return;
+
+                                                if (selectedColor === colorId) {
+                                                    setSelectedColor(null);
+                                                }
+                                                else {
+                                                    setSelectedColor(colorId);
+                                                    image_change(colorId);
+                                                    getprice(colorId);
+                                                }
+                                            }}
+                                            style={{ opacity: available ? 1 : 0.35, cursor: available ? 'pointer' : 'not-allowed' }}
                                         >
-                                            {product.variants.find(color => color.color === v)?.color_name}
-
+                                            {product.variants.find(v => v.color === colorId)?.color_name}
                                         </button>
-                                    ))
-                                }
+                                    );
+                                })}
                             </div>
-
                         </div>
                     )}
 
-                    {product.variants.length > 0 && [...new Set(product.variants.map(v => v.size_name))].filter(Boolean).length > 0 && (
+                    {/* Kích thước */}
+                    {product.variants.length > 0 && (
                         <div className="selection-group">
                             <h3>Kích thước</h3>
                             <div className="options-grid">
-                                {[...new Set(product.variants.map(v => v.size_name))].map((size, idx) => (
-                                    <button
-                                        key={idx}
-                                        className={`option-btn ${selectedSize === size ? 'active' : ''}`}
-                                        onClick={() => setSelectedSize(size)}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
+                                {/* Lấy tất cả size duy nhất */}
+                                {[...new Map(
+                                    product.variants.map(v => [v.size, { sizeId: v.size, sizeName: v.size_name }])
+                                ).values()].map(({ sizeId, sizeName }) => {
+                                    // Nếu đã chọn màu → chỉ hiện size có màu đó
+                                    const available = selectedColor
+                                        ? product.variants.some(v => v.size === sizeId && v.color === selectedColor)
+                                        : true;
+
+                                    return (
+                                        <button
+                                            key={sizeId}
+                                            className={`option-btn ${selectedSize === sizeId ? 'active' : ''}`}
+                                            onClick={() => {
+                                                if (!available) return;
+
+                                                if (selectedSize === sizeId) {
+                                                    setSelectedSize(null);
+                                                }
+                                                else {
+                                                    setSelectedSize(sizeId);
+                                                    // getprice(null,sizeId);
+                                                }
+                                            }}
+                                            style={{ opacity: available ? 1 : 0.35, cursor: available ? 'pointer' : 'not-allowed' }}
+                                        >
+                                            {sizeName}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -230,78 +280,10 @@ const ProductDetail = () => {
                         <p><strong>Danh mục:</strong> {product.category_name}</p>
                     </div>
                 </div>
-            </main>
-            <Suggestion category={product.category} />
-            <Footer />
-            <style jsx>{`
-                .product-detail-page { background: #fff; min-height: 100vh; }
-                .product-detail-container { max-width: 1400px; margin: 120px auto 60px; padding: 0 5%; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 60px; }
-                @media (max-width: 1024px) { .product-detail-container { grid-template-columns: 1fr; margin-top: 100px; } }
-                .product-gallery { position: sticky; top: 120px; height: fit-content; }
-                .main-image-box { background: #f5f5f7; border-radius: 20px; overflow: hidden; aspect-ratio: 3/4; }
-                .main-image-box img { width: 100%; height: 100%; object-fit: cover; }
-                .thumbnail-list { display: flex; gap: 15px; margin-top: 20px; overflow-x: auto; padding-bottom: 10px; }
-                .thumbnail { width: 80px; height: 100px; border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; transition: all 0.2s; }
-                .thumbnail.active { border-color: #000; }
-                .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
-                .product-info-section { display: flex; flex-direction: column; gap: 25px; }
-                .breadcrumb { width: 100%;
-                                display: flex;
-                                font-size: 14px;
-                                color: #86868b;
-                                text-align: center;
-                                justify-content: flex-start;
-                                gap: 10px;}
-                .detail-name { font-size: 36px; font-weight: 700; color: #1d1d1f; }
-                .detail-price { font-size: 24px; font-weight: 600; color: #1d1d1f; }
-                .detail-description h3, .selection-group h3 { font-size: 14px; text-transform: uppercase; color: #86868b; letter-spacing: 1px; margin-bottom: 15px; }
-                .quantity-selector {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-                .quantity-btn {
-                    width: 40px;
-                    height: 40px;
-                    border: 1px solid #d2d2d7;
-                    background: #fff;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    transition: all 0.2s;
-                }
-                .quantity-selector input {
-                    width: 150px;
-                    height: 40px;
-                    border: 1px solid #d2d2d7;
-                    border-radius: 8px;
-                    text-align: center;
-                    font-size: 14px;
-                }
-                .quantity-btn:hover {
-                    border-color: #000;
-                    background-color: #000;
-                    color: #fff;
-                }
 
-                .quantity-btn.active {
-                    background: #000;
-                    color: #fff;
-                    border-color: #000;
-                }
-                .detail-description p { color: #424245; line-height: 1.6; }
-                .options-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-                .option-btn { padding: 8px 20px; border: 1px solid #d2d2d7; background: #fff; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
-                .option-btn:hover { border-color: #000; }
-                .option-btn.active { background: #000; color: #fff; border-color: #000; }
-                .purchase-actions { display: flex; gap: 15px; margin-top: 20px; }
-                .add-to-cart-btn, .buy-now-btn { flex: 1; padding: 16px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 16px; }
-                .add-to-cart-btn { background: #fff; border: 2px solid #000; color: #000; }
-                .add-to-cart-btn:hover { background: #f5f5f7; }
-                .buy-now-btn { background: #000; border: none; color: #fff; }
-                .buy-now-btn:hover { background: #333; }
-                .product-meta { padding-top: 30px; border-top: 1px solid #d2d2d7; font-size: 14px; color: #86868b; display: flex; flex-direction: column; gap: 10px; }
-            `}</style>
+            </main>
+            <ListProduct category={product.category} slugged={product.slug} />
+            <Footer />
         </div>
     );
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
@@ -33,7 +33,32 @@ const Products = () => {
             mirror: true
         });
     }, []);
+    const location = useLocation(); // Lấy thông tin URL hiện tại
 
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const params = new URLSearchParams(location.search);
+                const category = params.get('category');
+                const search = params.get('search');
+
+                const [prodRes, catRes] = await Promise.all([
+                    api.get('/products/', { params: { category, search } }),
+                    api.get('/categories/')
+                ]);
+
+                setProducts(prodRes.data);
+                setCategories(catRes.data);
+                setSelectedCategory(catRes.data.find(cat => cat.slug === category)?.name || 'all');
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [location.search]);
     useEffect(() => {
         const fetchData = async () => {
             try {

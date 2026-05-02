@@ -13,12 +13,8 @@ const Login = () => {
         e.preventDefault();
         setError('');
         try {
-            const user = await login(email, password);
-            if (user.is_staff) {
-                navigate('/admin-dashboard');
-            } else {
-                navigate('/');
-            }
+            await login(email, password);
+            navigate('/');
         } catch (err) {
             setError('Email hoặc mật khẩu không đúng');
         }

@@ -62,11 +62,13 @@ function Checkout() {
                 phone_number: formData.phone,
                 shipping_address: formData.address,
                 total_amount: totalAmount,
-                items: cartItems.map(item => ({ variant: item.id, quantity: item.quantity, price: item.price }))
+                items: cartItems.map(item => ({
+                    variant: item.idvariant,
+                    quantity: item.quantity,
+                    price: item.price
+                }))
             };
-
             await api.post('/orders/', orderPayload);
-
             setTimeout(() => {
                 setOrderSuccess(true);
                 setIsSubmitting(false);
