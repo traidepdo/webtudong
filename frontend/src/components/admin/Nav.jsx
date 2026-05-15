@@ -11,7 +11,10 @@ function NavAdmin() {
                     <NavLink to="/admin/categories">Categories</NavLink>
                 </li>
                 <li>
-                    <NavLink to="/admin/product">Product</NavLink>
+                    <NavLink to="/admin/products">Product</NavLink>
+                </li>
+                <li>
+                    <NavLink to="/admin/order">Order</NavLink>
                 </li>
             </ul>
         </nav>

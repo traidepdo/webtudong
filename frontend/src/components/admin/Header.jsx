@@ -10,9 +10,13 @@ function Headeradmin() {
                 <h2>Routine Store</h2>
             </div>
             <div className="admin-profile">
-                <img src={user.avatar} alt="" />
-                <p>{user.username}</p>
-                <button type='button' onClick={logout}>Logout</button>
+                {user && (
+                    <>
+                        <img src={user.avatar} alt="" />
+                        <p>{user.username}</p>
+                        <button type='button' onClick={logout}>Logout</button>
+                    </>
+                )}
             </div>
             <style>{`
                 .headeradmin {

@@ -5,6 +5,7 @@ import api from '../api';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 function Checkout() {
     const [profile, setProfile] = useState({});
@@ -57,15 +58,15 @@ function Checkout() {
         try {
             // Simplified order submission
             const orderPayload = {
-                user: formData.userId,
+                user: formData.userId || null,
                 full_name: formData.fullName,
                 phone_number: formData.phone,
                 shipping_address: formData.address,
-                total_amount: totalAmount,
+                total_amount: Math.round(totalAmount),
+                payment_method: formData.paymentMethod,
                 items: cartItems.map(item => ({
                     variant: item.idvariant,
-                    quantity: item.quantity,
-                    price: item.price
+                    quantity: item.quantity
                 }))
             };
             await api.post('/orders/', orderPayload);
@@ -107,6 +108,7 @@ function Checkout() {
         }).format(price);
     };
 
+
     return (
         <div className="checkout-page">
             <Header scrolled={true} />
@@ -120,7 +122,7 @@ function Checkout() {
                                 type="text"
                                 name="fullName"
                                 required
-                                value={profile.first_name + " " + profile.last_name}
+                                value={formData.fullName}
                                 onChange={handleInputChange}
                                 placeholder="Nguyễn Văn A"
                             />
@@ -132,7 +134,7 @@ function Checkout() {
                                     type="tel"
                                     name="phone"
                                     required
-                                    value={profile.phone_number}
+                                    value={formData.phone}
                                     onChange={handleInputChange}
                                     placeholder="09xx xxx xxx"
                                 />
@@ -144,7 +146,7 @@ function Checkout() {
                                 name="address"
                                 required
                                 rows="3"
-                                value={profile.address}
+                                value={formData.address}
                                 onChange={handleInputChange}
                                 placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
                             ></textarea>
@@ -213,9 +215,10 @@ function Checkout() {
                                         </div>
                                         <div className="item-price-col">
                                             <div className="item-price">{formatPrice(item.price || item.base_price)}</div>
+                                            <div className="item-subtotal">x{item.quantity} = {formatPrice((item.price || item.base_price) * item.quantity)}</div>
                                             <button
                                                 className="remove-item-btn"
-                                                onClick={() => removeFromCart(item.id)}
+                                                onClick={() => removeFromCart(item.idvariant)}
                                                 title="Xóa khỏi giỏ"
                                             >
                                                 <i className="bi bi-trash"></i>
@@ -233,16 +236,19 @@ function Checkout() {
                         <div className="summary-totals">
                             <div className="total-row">
                                 <span>Tạm tính</span>
-                                <span>{formatPrice(totalAmount)}</span>
+                                <span className="subtotal-price">{formatPrice(totalAmount)}</span>
                             </div>
                             <div className="total-row">
                                 <span>Phí vận chuyển</span>
-                                <span>Miễn phí</span>
+                                <span className="free-shipping"><i className="bi bi-truck"></i> Miễn phí</span>
                             </div>
                             <div className="total-row grand-total">
                                 <span>Tổng cộng</span>
-                                <span>{formatPrice(totalAmount)}</span>
+                                <span className="grand-price">{formatPrice(totalAmount)}</span>
                             </div>
+                            <Link to={`/order-history/`} className="view-detail-btn">
+                                Xem lịch sử đơn hàng <i className="bi bi-arrow-right"></i>
+                            </Link>
                         </div>
                     </div>
                 </aside>
@@ -342,8 +348,9 @@ function Checkout() {
                 .item-details { flex: 1; }
                 .item-details h4 { font-size: 14px; margin-bottom: 4px; font-weight: 600; }
                 .item-details p { font-size: 12px; color: #86868b; }
-                .item-price { font-weight: 600; font-size: 14px; }
-                .item-price-col { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+                .item-price { font-weight: 600; font-size: 14px; color: #0071e3; }
+                .item-subtotal { font-size: 11px; color: #86868b; font-weight: 500; }
+                .item-price-col { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
                 .remove-item-btn { 
                     background: none; 
                     border: none; 
@@ -357,9 +364,92 @@ function Checkout() {
                 .empty-cart-msg { text-align: center; color: #86868b; padding: 20px 0; font-size: 14px; }
                 .empty-cart-msg a { color: #0071e3; text-decoration: none; font-weight: 600; }
 
-                .summary-totals { border-top: 1px solid #eee; pt: 20px; display: flex; flex-direction: column; gap: 12px; }
-                .total-row { display: flex; justify-content: space-between; font-size: 15px; color: #424245; }
-                .grand-total { border-top: 1px solid #eee; margin-top: 10px; padding-top: 15px; font-size: 20px; font-weight: 700; color: #000; }
+                .summary-totals { border-top: 1px solid #eee; padding-top: 20px; display: flex; flex-direction: column; gap: 14px; }
+                .total-row { display: flex; justify-content: space-between; align-items: center; font-size: 15px; color: #424245; }
+                .subtotal-price { font-weight: 600; color: #1d1d1f; }
+                .free-shipping {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;
+                    background: linear-gradient(135deg, #34c759, #30d158);
+                    color: #fff;
+                    font-size: 12px;
+                    font-weight: 700;
+                    padding: 3px 10px;
+                    border-radius: 20px;
+                    letter-spacing: 0.3px;
+                }
+                .grand-total {
+                    border-top: 2px solid #eee;
+                    margin-top: 6px;
+                    padding-top: 18px;
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #1d1d1f;
+                }
+                .grand-price {
+                    font-size: 24px;
+                    font-weight: 800;
+                    background: linear-gradient(135deg, #e8231a, #ff6b35);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    letter-spacing: -0.5px;
+                }
+                .view-detail-btn {
+                    position: relative;
+                    overflow: hidden; /* QUAN TRỌNG */
+                    display: inline-block;
+                    padding: 8px 20px;
+                    background: #000;
+                    color: #fff;
+                    border: 1px solid #d2d2d7;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    text-decoration: none;
+                    text-align: center;
+                    transition: all 0.3s ease;
+                }
+
+                /* nền khi hover */
+                .view-detail-btn:hover {
+                    border-color: #000;
+                    background: #000;
+                    color: #fff;
+                }
+
+                /* hiệu ứng ánh sáng */
+                .view-detail-btn::before {
+                    content: "";
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 50%;
+                    height: 100%;
+                    background: linear-gradient(
+                        120deg,
+                        transparent,
+                        rgba(255, 255, 255, 0.6),
+                        transparent
+                    );
+                    transform: skewX(-20deg);
+                }
+
+                /* khi hover thì chạy */
+                .view-detail-btn:hover::before {
+                    animation: shine 0.8s forwards;
+                }
+
+                /* animation */
+                @keyframes shine {
+                    0% {
+                        left: -100%;
+                    }
+                    100% {
+                        left: 150%;
+                    }
+                }
             `}</style>
         </div>
     );

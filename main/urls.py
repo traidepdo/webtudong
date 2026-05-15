@@ -4,7 +4,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
     CategoryViewSet, ProductViewSet, ProductVariantViewSet,
     OrderViewSet, RegisterView, UserProfileView, home,
-    UserViewSet, AdminStatsView, ColorViewSet, SizeViewSet, ProductImageViewSet, related_products
+    UserViewSet, AdminStatsView, ColorViewSet, SizeViewSet, ProductImageViewSet, related_products,product_chat, submit_checkout, chat_history, ReviewListCreateView, ReviewEligibilityView,
+    AllReviewsViewSet
 
 )
 router = DefaultRouter()
@@ -16,7 +17,9 @@ router.register(r'users', UserViewSet, basename='user')
 router.register(r'colors', ColorViewSet, basename='color')
 router.register(r'sizes', SizeViewSet, basename='size')
 router.register(r'product-images', ProductImageViewSet, basename='product-image')
+router.register(r'reviews', AllReviewsViewSet, basename='review')
 
+ 
 
 urlpatterns = [
     path('', home, name='home'),
@@ -28,5 +31,11 @@ urlpatterns = [
     path('api/profile/', UserProfileView.as_view(), name='user_profile'),
     path('api/admin/stats/', AdminStatsView.as_view(), name='admin_stats'),
     path('api/products/<slug:slug>/related/', related_products, name='related_products'),
+    path('api/products/<slug:slug>/reviews/', ReviewListCreateView.as_view(), name='product-reviews'),
+    path('api/products/<slug:slug>/review-eligibility/', ReviewEligibilityView.as_view(), name='review-eligibility'),
+    path('api/chat/', product_chat, name='product_chat'),
+    path('api/chat/history/', chat_history, name='chat_history'),
+    path('api/submit-checkout/', submit_checkout, name='submit_checkout'),
+    
 
 ]

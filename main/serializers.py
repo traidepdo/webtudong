@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Category, Color, Size, Product, ProductImage, ProductVariant, Order, OrderItem, Payment, Profile
+from .models import Category, Color, Size, Product, ProductImage, ProductVariant, Order, OrderItem, Payment, Profile, Review
 import json
 import uuid
 
@@ -26,6 +26,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 class ProductVariantSerializer(serializers.ModelSerializer):
     color_name = serializers.CharField(source='color.name', read_only=True)
+    color_hex = serializers.CharField(source='color.hex_code', read_only=True)
     size_name = serializers.CharField(source='size.name', read_only=True)
     # Vì price đã là @property trong Model mới, chỉ cần khai báo như sau:
     price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -34,7 +35,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductVariant
-        fields = ['id', 'product', 'color', 'color_name', 'size', 'size_name', 'sku', 'stock_quantity', 'price', 'variant_image_url']
+        fields = ['id', 'product', 'color', 'color_name', 'color_hex', 'size', 'size_name', 'sku', 'stock_quantity', 'price', 'variant_image_url']
 
 class ProductSerializer(serializers.ModelSerializer):
     # lấy danh sách các variant của product
@@ -42,10 +43,15 @@ class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     # lấy name danh mục
     category_name = serializers.CharField(source='category.name', read_only=True)
+    category_slug = serializers.CharField(source='category.slug', read_only=True)
 
     class Meta:
         model = Product
-        fields = ['id', 'category', 'category_name', 'name', 'slug', 'description', 'created_at', 'variants', 'images']
+        fields = [
+            'id', 'category', 'category_name', 'category_slug', 'name', 'slug', 
+            'description', 'brand', 'meta_title', 'meta_description',
+            'created_at', 'variants', 'images'
+        ]
     def create(self, validated_data):
         validated_data.pop('variants', None)
         validated_data.pop('images', None)
@@ -118,7 +124,6 @@ class ProductSerializer(serializers.ModelSerializer):
 
             ProductImage.objects.create(
                 product=product,
-                variant=linked_variant,   # ← gắn variant vào đây
                 color_id=img_color_id,
                 image=image_file,
                 is_primary=info.get('is_primary', False)
@@ -130,6 +135,9 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.name = validated_data.get('name', instance.name)
         instance.category = validated_data.get('category', instance.category)
         instance.description = validated_data.get('description', instance.description)
+        instance.brand = validated_data.get('brand', instance.brand)
+        instance.meta_title = validated_data.get('meta_title', instance.meta_title)
+        instance.meta_description = validated_data.get('meta_description', instance.meta_description)
         instance.save()
 
         # 2. Xử lý Variants
@@ -223,37 +231,74 @@ class ProductSerializer(serializers.ModelSerializer):
                 color_id=color_id,
                 defaults={
                     'is_primary': info.get('is_primary', False),
-                    'variant': variant_to_link,
                 }
             )
             img_obj.image = image_file
-            if img_obj.variant is None and variant_to_link:
-                img_obj.variant = variant_to_link
             img_obj.save()
 
         return instance
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    # Lấy thêm các trường này từ ProductVariant (liên kết qua trường 'variant')
+    product_name = serializers.CharField(source='variant.product.name', read_only=True)
+    color = serializers.CharField(source='variant.color.name', read_only=True)
+    size = serializers.CharField(source='variant.size.name', read_only=True)
+    
+    # Lấy link ảnh từ property variant_image_url của Model ProductVariant
+    image = serializers.ReadOnlyField(source='variant.variant_image_url')
+
     class Meta:
         model = OrderItem
-        fields = ['id', 'variant', 'quantity', 'price']
-
+        # Bổ sung các trường mới vào mảng fields để trả về cho Frontend
+        fields = ['id', 'variant', 'product_name', 'color', 'size', 'image', 'quantity', 'price']
+        read_only_fields = ['price']
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True)  # ❌ bỏ read_only=True
+    items = OrderItemSerializer(many=True)
+    payment_method = serializers.CharField(write_only=True, required=False)
+    payment = serializers.SerializerMethodField()
+    
+    # Bổ sung các field để khớp với Frontend
+    method = serializers.CharField(source='payment.method', read_only=True)
+    is_paid = serializers.SerializerMethodField()
+    order_code = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'full_name', 'phone_number', 'shipping_address', 'total_amount', 'status', 'created_at', 'items']
+        fields = ['id', 'order_code', 'user', 'full_name', 'phone_number', 'shipping_address',
+                  'total_amount', 'status', 'created_at', 'items', 'payment_method', 'payment', 'method', 'is_paid']
+
+    def get_payment(self, obj):
+        try:
+            payment = obj.payment
+            return {"method": payment.method, "status": payment.status}
+        except Exception:
+            return None
+
+    def get_is_paid(self, obj):
+        try:
+            return obj.payment.status == 'completed'
+        except Exception:
+            return False
+
+    def get_order_code(self, obj):
+        return f"ORD{obj.id}"
 
     def create(self, validated_data):
-        items_data = validated_data.pop('items', [])  # tách items ra trước
-        
-        order = Order.objects.create(**validated_data)  # tạo order
-        
-        for item in items_data:  # tạo từng OrderItem
+        payment_method = validated_data.pop('payment_method', 'cod')
+        items_data = validated_data.pop('items', [])
+
+        order = Order.objects.create(**validated_data)
+
+        for item in items_data:
             OrderItem.objects.create(order=order, **item)
-        
-        return order 
+
+        Payment.objects.create(
+            order=order,
+            method=payment_method,
+            amount=order.total_amount
+        )
+
+        return order
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
@@ -325,3 +370,37 @@ class RegisterSerializer(serializers.ModelSerializer):
         profile.save()
 
         return user
+class ReviewSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    avatar = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'username', 'avatar', 'product', 'rating', 'comment', 'created_at']
+        read_only_fields = ['user', 'created_at']
+ 
+    def get_avatar(self, obj):
+        request = self.context.get('request')
+        try:
+            avatar = obj.user.profile.avatar
+            if avatar and request:
+                return request.build_absolute_uri(avatar.url)
+        except Exception:
+            pass
+        return None
+ 
+    def validate(self, data):
+        request = self.context.get('request')
+        user = request.user if request else None
+        product = data.get('product')
+ 
+        can_review, message = Review.user_can_review(user, product)
+        if not can_review:
+            raise serializers.ValidationError(message)
+ 
+        return data
+ 
+    def create(self, validated_data):
+        request = self.context.get('request')
+        validated_data['user'] = request.user
+        return super().create(validated_data)

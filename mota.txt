@@ -1,0 +1,61 @@
+Dựa vào file views.py bạn vừa tải lên, mình xin tổng kết các công nghệ được sử dụng và luồng xử lý chi tiết của tính năng Chat AI trong hệ thống của bạn.
+
+Hệ thống Chatbot này được thiết kế theo mô hình Hybrid (Lai): kết hợp giữa kịch bản định sẵn (Rule-based/Regex) để đảm bảo tốc độ, tính chính xác và Mô hình ngôn ngữ lớn (LLM) để xử lý ngôn ngữ tự nhiên mượt mà.
+
+1. Tổng kết các công nghệ được sử dụng
+Backend Framework: Django & Django REST Framework (DRF) để xây dựng các API xử lý logic, phân quyền (Permissions) và giao tiếp với cơ sở dữ liệu.
+
+Mô hình AI (LLM): Sử dụng model mã nguồn mở Qwen2.5:3b chạy cục bộ thông qua Ollama. Nhiệt độ (temperature) được set bằng 0.0 để AI trả lời có tính ổn định cao, không bịaa đặt thông tin.
+
+Quản lý luồng AI: LangChain (langchain_ollama, PromptTemplate, StrOutputParser) được dùng để thiết kế Prompt, lắp ráp ngữ cảnh và gọi model AI một cách có cấu trúc.
+
+Xử lý ngôn ngữ truyền thống (Rule-based): Sử dụng thư viện Regex (re) để bắt nhanh các từ khóa điều hướng và bóc tách giá tiền (dưới/trên) từ câu hỏi của khách một cách chính xác tuyệt đối.
+
+Thuật toán gợi ý (Bổ sung ngoài Chat): Sử dụng Scikit-Learn (TfidfVectorizer, cosine_similarity) và Numpy để tính toán độ tương đồng văn bản, từ đó gợi ý các "Sản phẩm liên quan".
+
+2. Luồng xử lý của Chat AI (product_chat API)
+Khi người dùng gửi một tin nhắn từ Frontend lên API /product_chat/, hệ thống sẽ trải qua một quy trình kiểm duyệt và xử lý gồm 7 bước chặt chẽ:
+
+Bước 1: Kiểm tra đăng nhập (Bảo mật)
+Hệ thống kiểm tra user_id. Nếu khách chưa đăng nhập, bot lập tức yêu cầu khách đăng nhập và trả về lệnh điều hướng sang trang /login mà không cần gọi AI.
+
+Bước 2: Phản xạ nhanh (Fast Detection)
+Sử dụng hàm detect_navigate để quét các từ khóa chuyển trang cơ bản (như "giỏ hàng", "thanh toán", "trang chủ"). Nếu khớp, bot lập tức trả về lệnh Maps để chuyển trang, tiết kiệm thời gian và tài nguyên server do không phải gọi LLM.
+
+Bước 3: Thu thập ngữ cảnh (RAG - Retrieval-Augmented Generation)
+Để AI trả lời chính xác, hệ thống đóng vai trò "mớm" thông tin (context) cho AI:
+
+Tìm kiếm sản phẩm: Dùng hàm detect_search_intent bắt từ khóa và giá tiền. Sau đó gọi search_products để truy vấn DB và gom tối đa 6 sản phẩm phù hợp thành một chuỗi văn bản.
+
+Thông tin hiện tại: Ghi nhận xem khách đang ở trang nào (path_name), đang xem sản phẩm gì (slug), và đã click chọn màu/size/số lượng nào trên giao diện chưa.
+
+Lịch sử trò chuyện: Lấy 6 tin nhắn gần nhất từ DB để AI nhớ ngữ cảnh cuộc trò chuyện.
+
+Bước 4: Thiết lập Prompt & Gọi LLM
+Toàn bộ dữ liệu thu thập ở Bước 3 được nhồi vào PromptTemplate. Prompt này ép buộc AI:
+
+Đóng vai trợ lý bán hàng Blue Sky Fashion.
+
+Bắt buộc trả về định dạng JSON chứa 3 trường: reply (câu trả lời), action (hành động tiếp theo) và data (dữ liệu kèm theo).
+
+Bước 5: Bóc tách và Làm giàu dữ liệu (Post-processing)
+Hàm parse_ai_response bóc tách chuỗi JSON từ AI. Tùy vào lệnh (action) AI đưa ra mà hệ thống làm giàu thêm dữ liệu:
+
+Nếu AI chọn show_products: Đính kèm mảng thông tin sản phẩm (có hình ảnh, giá) vào JSON để frontend render.
+
+Nếu AI chọn show_order_form: Hệ thống tự động truy xuất các màu sắc, kích cỡ khả dụng của sản phẩm đó và điền sẵn các lựa chọn khách đã click trên web để hiển thị form đặt hàng.
+
+Bước 6: Chốt đơn tự động (Auto Order)
+Nếu AI nhận thấy khách đã cung cấp đủ thông tin (tên, SĐT, địa chỉ, màu, size) và chọn lệnh auto_order, hệ thống gọi thẳng hàm create_order vào Database.
+
+Nếu thành công: Trả về mã đơn hàng.
+
+Nếu thất bại (hết hàng, sai màu): Báo lỗi và lùi lại bước hiện form đặt hàng.
+
+Bước 7: Cơ chế phòng thủ (Fallback) & Lưu trữ
+
+Phòng thủ AI "ngốc": Dùng Regex kiểm tra xem khách có gõ các từ "mua", "đặt", "chốt đơn" không. Nếu có mà AI lại không trả về lệnh mở form đặt hàng, hệ thống sẽ tự động ép/override biến action = "show_order_form".
+
+Lưu lịch sử: Cuối cùng, hệ thống lưu tin nhắn của khách và câu trả lời của Bot vào bảng ChatMessage trong DB và gửi luồng JSON cuối cùng về cho Frontend hiển thị.
+
+Đánh giá: Đây là một luồng xử lý rất thực tế, an toàn và tối ưu cho E-commerce. Bạn không giao phó 100% quyền cho AI mà sử dụng AI như một công cụ phân tích ngôn ngữ, còn việc truy xuất dữ liệu và chốt đơn vẫn được kiểm soát chặt chẽ bằng code logic truyền thống.

@@ -5,8 +5,8 @@
 
 .product-detail-container {
     max-width: 1400px;
-    margin: 120px auto 60px;
-    padding: 0 5%;
+    margin: 100px auto 60px;
+    padding: 3% 5%;
     display: grid;
     grid-template-columns: 1.2fr 0.8fr;
     gap: 60px;

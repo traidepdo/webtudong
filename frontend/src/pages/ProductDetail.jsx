@@ -7,7 +7,11 @@ import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
 import ListProduct from '../components/ListProduct';
 import '../product.css';
-
+import '../App.css';
+import ProductChat from '../components/ProductChat';
+import ProductReview from '../components/ProductReview';
+import DetailPageSEO from '../components/DetailPageSEO';
+import '../detail.css';
 
 const ProductDetail = () => {
     const { slug } = useParams();
@@ -36,16 +40,18 @@ const ProductDetail = () => {
         window.scrollTo(0, 0);
     }, [slug]);
     const [price, setPrice] = useState(0);
-
     useEffect(() => {
         if (!product) return;
 
         const idproductdefault = product.images?.find(img => img.is_primary)?.variant;
-
         const variant = product.variants?.find(v => v.id === idproductdefault);
 
         if (variant) {
             setPrice(Number(variant.price));
+        } else if (product.variants && product.variants.length > 0) {
+            setPrice(Number(product.variants[0].price));
+        } else {
+            setPrice(Number(product.price || 0));
         }
     }, [product]);
     useEffect(() => {
@@ -86,7 +92,7 @@ const ProductDetail = () => {
             return;
         }
 
-        addToCart(product, quantity);
+        addToCart({ ...product, price: price }, quantity, selectedColor, selectedSize, idVariant);
         navigate('/checkout');
     };
 
@@ -141,6 +147,12 @@ const ProductDetail = () => {
     )?.id
     return (
         <div className="product-detail-page">
+            <DetailPageSEO
+                product={product}
+                pageTitle={`${product.name} | Routine`}
+                pageDescription={product.description?.substring(0, 160) || "Chi tiết sản phẩm Routine"}
+                baseUrl={window.location.origin}
+            />
             <Header scrolled={true} />
             <main className="product-detail-container">
                 <div className="product-gallery">
@@ -162,7 +174,7 @@ const ProductDetail = () => {
 
                 <div className="product-info-section">
                     <nav className="breadcrumb">
-                        <span>Trang chủ</span> / <Link to={`/products?category=${product.category}`}>{product.category_name}</Link>
+                        <Link to="/">Trang chủ</Link> / <Link to={`/products?category=${product.category_slug}`}>{product.category_name}</Link> / <span>{product.name}</span>
                     </nav>
                     <h1 className="detail-name">{product.name}</h1>
                     <div className="detail-price">{formatPrice(price)}</div>
@@ -283,6 +295,14 @@ const ProductDetail = () => {
 
             </main>
             <ListProduct category={product.category} slugged={product.slug} />
+            <ProductChat
+                slug={slug}
+                productName={product.name}
+                selectedColor={product.variants.find(v => v.color === selectedColor)?.color_name || ''}
+                selectedSize={product.variants.find(v => v.size === selectedSize)?.size_name || ''}
+                selectedQuantity={quantity}
+            />
+            <ProductReview slug={slug} productName={product.name} />
             <Footer />
         </div>
     );

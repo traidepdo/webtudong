@@ -2,42 +2,78 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.text import slugify
+from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 
 # ==========================================
 # PHẦN 1: QUẢN LÝ SẢN PHẨM & BIẾN THỂ
 # ==========================================
-from django.utils.text import slugify
 
 class Category(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
-    # parent giúp tạo danh mục con. blank=True, null=True nghĩa là danh mục gốc (không có cha)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcategories')
+    parent = models.ForeignKey(
+        'self', on_delete=models.CASCADE,
+        null=True, blank=True, related_name='subcategories'
+    )
+    # === FIX 1: Thêm các field hỗ trợ SEO ===
+    meta_title = models.CharField(max_length=70, blank=True, help_text="Tiêu đề SEO (≤70 ký tự). Để trống = dùng name.")
+    meta_description = models.CharField(max_length=160, blank=True, help_text="Mô tả SEO (≤160 ký tự).")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name_plural = 'Categories' # Sửa lỗi chính tả trong trang Admin của Django (mặc định nó sẽ ghi là Categorys)
+        verbose_name_plural = 'Categories'
 
     def save(self, *args, **kwargs):
-        # Tự động tạo slug từ tên nếu chưa có
         if not self.slug:
-            self.slug = slugify(self.name)
+            # === FIX 2: Slug theo đường dẫn cha → con để tránh trùng ===
+            # VD: "Áo" trong "Nam" → slug = "nam-ao", trong "Nữ" → slug = "nu-ao"
+            base = slugify(self.name)
+            if self.parent:
+                # Lấy slug của parent (đệ quy nếu parent chưa có slug)
+                parent_slug = self.parent.slug or slugify(self.parent.name)
+                base = f"{parent_slug}-{base}"
+
+            slug = base
+            counter = 1
+            while Category.objects.filter(slug=slug).exists():
+                slug = f"{base}-{counter}"
+                counter += 1
+            self.slug = slug
         super().save(*args, **kwargs)
 
     def __str__(self):
-        # Hiển thị đường dẫn danh mục đẹp mắt trong Admin (VD: Thời trang Nam -> Áo -> Áo thun)
         full_path = [self.name]
         k = self.parent
         while k is not None:
             full_path.append(k.name)
             k = k.parent
         return ' -> '.join(full_path[::-1])
-from django.db import models
-from django.utils.text import slugify
+
+    # === FIX 3: Helper lấy meta_title với fallback ===
+    def get_meta_title(self):
+        return self.meta_title or self.name
+
+    def get_breadcrumb(self):
+        """Trả về list dạng [('Thời trang Nam', '/nam'), ('Áo', '/nam-ao')]
+        dùng để render BreadcrumbList schema.org"""
+        crumbs = []
+        node = self
+        while node is not None:
+            crumbs.append({'name': node.name, 'slug': node.slug})
+            node = node.parent
+        return list(reversed(crumbs))
+
+    def get_absolute_url(self):
+        return f"/products?category={self.slug}"
+
 
 # ==========================================
 # THUỘC TÍNH SẢN PHẨM
 # ==========================================
+
 class Color(models.Model):
     name = models.CharField(max_length=50)
     hex_code = models.CharField(max_length=10, blank=True, null=True)
@@ -45,28 +81,73 @@ class Color(models.Model):
     def __str__(self):
         return self.name
 
+
 class Size(models.Model):
     name = models.CharField(max_length=20)
 
     def __str__(self):
         return self.name
 
+
 # ==========================================
 # SẢN PHẨM GỐC
 # ==========================================
+
 class Product(models.Model):
-    category = models.ForeignKey('Category', related_name='products', on_delete=models.SET_NULL, null=True)
+    category = models.ForeignKey(
+        'Category', related_name='products',
+        on_delete=models.SET_NULL, null=True
+    )
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    # Thêm property để lấy giá thấp nhất (hiển thị trên danh sách sản phẩm kiểu "Giá từ 100k")
+    # === FIX 4: Thêm field SEO riêng cho Product ===
+    meta_title = models.CharField(max_length=70, blank=True, help_text="Để trống = dùng name.")
+    meta_description = models.CharField(max_length=160, blank=True)
+    # Brand giúp schema.org Product đầy đủ hơn → Google hiểu ngữ cảnh tốt hơn
+    brand = models.CharField(max_length=100, blank=True, help_text="Thương hiệu sản phẩm, dùng cho schema.org")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # Schema.org cần updated_at
+
+    class Meta:
+        indexes = [
+            # === FIX 5: Index để query nhanh hơn ===
+            models.Index(fields=['slug']),
+            models.Index(fields=['category', 'created_at']),
+        ]
+
     @property
     def min_price(self):
-        # Lấy giá thấp nhất từ tất cả biến thể
-        variant = self.variants.order_by('price').first()
-        return variant.price if variant else 0
+        variant = self.variants.filter(stock_quantity__gt=0).order_by('price').first()
+        return variant.price if variant else None
+
+    @property
+    def max_price(self):
+        variant = self.variants.filter(stock_quantity__gt=0).order_by('-price').first()
+        return variant.price if variant else None
+
+    @property
+    def average_rating(self):
+        from django.db.models import Avg
+        result = self.reviews.aggregate(avg=Avg('rating'))
+        return round(result['avg'], 1) if result['avg'] else None
+
+    @property
+    def review_count(self):
+        return self.reviews.count()
+
+    @property
+    def is_in_stock(self):
+        return self.variants.filter(stock_quantity__gt=0).exists()
+
+    def get_meta_title(self):
+        return self.meta_title or self.name
+
+    def get_absolute_url(self):
+        category_slug = self.category.slug if self.category else "all"
+        return f"/{category_slug}/{self.slug}"
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -82,17 +163,16 @@ class Product(models.Model):
 
 
 # ==========================================
-# BIẾN THỂ SẢN PHẨM (KẾT HỢP PRODUCT + COLOR + SIZE)
+# BIẾN THỂ SẢN PHẨM
 # ==========================================
 
 class ProductVariant(models.Model):
     product = models.ForeignKey(Product, related_name='variants', on_delete=models.CASCADE)
     color = models.ForeignKey(Color, related_name='variants', on_delete=models.CASCADE)
     size = models.ForeignKey(Size, related_name='variants', on_delete=models.CASCADE)
-    sku = models.CharField(max_length=100, unique=True)
+    sku = models.CharField(max_length=100, unique=True, db_index=True)  # FIX 6: db_index
     stock_quantity = models.PositiveIntegerField(default=0)
-    # Giá bán gốc của riêng biến thể này
-    price = models.DecimalField(max_digits=10, decimal_places=2) 
+    price = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
         unique_together = ('product', 'color', 'size')
@@ -102,68 +182,79 @@ class ProductVariant(models.Model):
 
     @property
     def current_price(self):
-        """
-        Tính toán giá thực tế sau khi áp dụng giảm giá.
-        Ưu tiên: Giảm giá riêng cho Biến thể > Giảm giá cho Sản phẩm gốc.
-        """
         now = timezone.now()
-        # Tìm ưu đãi còn hiệu lực
         discount = Discount.objects.filter(
             models.Q(variant=self) | models.Q(product=self.product),
             is_active=True,
             start_date__lte=now,
             end_date__gte=now
-        ).order_by('-variant').first() # Ưu tiên discount cụ thể của variant trước
+        ).order_by('-variant').first()
 
         if discount:
             if discount.discount_type == 'percentage':
-                # Ví dụ: 100.000 * (1 - 20/100) = 80.000
                 return self.price * (1 - discount.value / 100)
             elif discount.discount_type == 'fixed':
-                # Ví dụ: 100.000 - 20.000 = 80.000 (không để giá âm)
                 return max(self.price - discount.value, 0)
-        
         return self.price
 
     @property
+    def availability(self):
+        """Trả về chuỗi schema.org ItemAvailability chuẩn"""
+        if self.stock_quantity > 0:
+            return "https://schema.org/InStock"
+        return "https://schema.org/OutOfStock"
+
+    @property
     def variant_image_url(self):
-        """
-        Tự động lấy ảnh phù hợp nhất cho biến thể:
-        1. Ảnh chính của màu đó -> 2. Ảnh bất kỳ của màu đó -> 3. Ảnh chính của sản phẩm.
-        """
-        from .models import ProductImage # Tránh circular import nếu cần
-        
-        # Thử tìm ảnh theo màu của biến thể
-        image_obj = ProductImage.objects.filter(product=self.product, color=self.color).order_by('-is_primary').first()
-        
-        # Nếu màu này không có ảnh, lấy ảnh chính đại diện của sản phẩm
+        image_obj = ProductImage.objects.filter(
+            product=self.product, color=self.color
+        ).order_by('-is_primary').first()
         if not image_obj:
-            image_obj = ProductImage.objects.filter(product=self.product, is_primary=True).first()
-            
+            image_obj = ProductImage.objects.filter(
+                product=self.product, is_primary=True
+            ).first()
         return image_obj.image.url if image_obj and image_obj.image else None
+
+
 # ==========================================
-# ẢNH SẢN PHẨM (LIÊN KẾT THEO MÀU)
+# ẢNH SẢN PHẨM
+# === FIX 7: Bỏ field `variant` (redundant với `color`) ===
 # ==========================================
+
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    # Thêm related_name='images' để từ Color có thể truy xuất ngược lại ảnh
-    variant = models.ForeignKey(ProductVariant, related_name='images', on_delete=models.SET_NULL, null=True, blank=True)
-    color = models.ForeignKey(Color, related_name='images', on_delete=models.SET_NULL, null=True, blank=True)
+    # Giữ color thôi, vì ảnh theo màu — không theo size
+    # variant bị xóa vì: nếu đã có color thì biết variant nào dùng ảnh đó rồi
+    color = models.ForeignKey(
+        Color, related_name='images',
+        on_delete=models.SET_NULL, null=True, blank=True
+    )
     image = models.ImageField(upload_to='products/')
+    alt_text = models.CharField(max_length=125, blank=True,
+        help_text="Alt text cho ảnh (SEO). VD: 'Áo thun nam màu xanh size L'")  # FIX 8: alt_text
     is_primary = models.BooleanField(default=False)
-    
+
     class Meta:
-        # Ưu tiên hiển thị ảnh chính trước
         ordering = ['-is_primary', '-id']
-    
+
     def __str__(self):
         if self.color:
             return f"Image of {self.product.name} - {self.color.name}"
         return f"Image of {self.product.name}"
 
+    def get_alt_text(self):
+        """Fallback auto-generate alt text nếu chưa điền"""
+        if self.alt_text:
+            return self.alt_text
+        parts = [self.product.name]
+        if self.color:
+            parts.append(f"màu {self.color.name}")
+        return ' '.join(parts)
 
-from django.utils import timezone
-from django.core.validators import MinValueValidator, MaxValueValidator
+
+# ==========================================
+# GIẢM GIÁ
+# ==========================================
 
 class Discount(models.Model):
     DISCOUNT_TYPE_CHOICES = (
@@ -171,25 +262,42 @@ class Discount(models.Model):
         ('fixed', 'Số tiền cố định (VNĐ)'),
     )
 
-    name = models.CharField(max_length=255, verbose_name="Tên chương trình")
+    name = models.CharField(max_length=255)
     discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES, default='percentage')
-    value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Giá trị giảm")
-    
-    # Liên kết: Có thể giảm cho cả Sản phẩm hoặc chỉ 1 Biến thể nhất định
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='discounts', null=True, blank=True)
-    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='discounts', null=True, blank=True)
+    value = models.DecimalField(max_digits=10, decimal_places=2)
+
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE,
+        related_name='discounts', null=True, blank=True
+    )
+    variant = models.ForeignKey(
+        ProductVariant, on_delete=models.CASCADE,
+        related_name='discounts', null=True, blank=True
+    )
 
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     is_active = models.BooleanField(default=True)
 
+    # === FIX 9: Validation — không cho phép Discount không gắn với gì ===
+    def clean(self):
+        if not self.product and not self.variant:
+            raise ValidationError(
+                "Discount phải gắn với ít nhất một Product hoặc một ProductVariant."
+            )
+        if self.product and self.variant:
+            raise ValidationError(
+                "Chỉ chọn một trong hai: Product hoặc ProductVariant, không chọn cả hai."
+            )
+
     def is_valid(self):
-        """Kiểm tra xem mã giảm giá có còn hạn và đang kích hoạt không"""
         now = timezone.now()
         return self.is_active and self.start_date <= now <= self.end_date
 
     def __str__(self):
         return f"{self.name} - {self.value} ({self.get_discount_type_display()})"
+
+
 # ==========================================
 # PHẦN 2: QUẢN LÝ ĐƠN HÀNG & THANH TOÁN
 # ==========================================
@@ -203,26 +311,37 @@ class Order(models.Model):
         ('cancelled', 'Đã hủy'),
     )
 
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True) # Hỗ trợ khách vãng lai nếu để null
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     full_name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=20)
     shipping_address = models.TextField()
-    
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='pending',
+        db_index=True  # FIX 10: Index để filter nhanh
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Order #{self.id} - {self.full_name}"
 
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
-    variant = models.ForeignKey(ProductVariant, on_delete=models.RESTRICT) # RESTRICT để không vô tình xóa sản phẩm đã có người mua
+    variant = models.ForeignKey(ProductVariant, on_delete=models.RESTRICT)
     quantity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2) # LƯU Ý: Phải lưu lại giá tại thời điểm mua
+    # FIX 11: editable=False — giá chỉ set lúc tạo, không cho sửa sau
+    price = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+
+    def save(self, *args, **kwargs):
+        # Tự động set giá từ variant nếu là item mới (chưa có pk)
+        if not self.pk and not self.price:
+            self.price = self.variant.current_price
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.quantity} x {self.variant.sku}"
+
 
 class Payment(models.Model):
     PAYMENT_METHOD_CHOICES = (
@@ -231,7 +350,6 @@ class Payment(models.Model):
         ('momo', 'Ví MoMo'),
         ('stripe', 'Thẻ tín dụng (Stripe)'),
     )
-
     PAYMENT_STATUS_CHOICES = (
         ('pending', 'Đang chờ'),
         ('completed', 'Thành công'),
@@ -239,10 +357,10 @@ class Payment(models.Model):
         ('refunded', 'Đã hoàn tiền'),
     )
 
-    order = models.ForeignKey(Order, related_name='payments', on_delete=models.CASCADE)
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
     method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
     status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
-    transaction_id = models.CharField(max_length=255, blank=True, null=True) # Mã giao dịch trả về từ VNPay/Momo
+    transaction_id = models.CharField(max_length=255, blank=True, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -251,7 +369,7 @@ class Payment(models.Model):
 
 
 # ==========================================
-# PHẦN 3: THÔNG TIN NGƯỜI DÙNG (PROFILE)
+# PHẦN 3: NGƯỜI DÙNG
 # ==========================================
 
 class Profile(models.Model):
@@ -264,19 +382,80 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
 
-# Tự động tạo hoặc cập nhật Profile khi User được tạo/cập nhật
-# Tự động tạo hoặc cập nhật Profile khi User được tạo/cập nhật
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        # Sử dung get_or_create để an toàn tuyệt đối
         Profile.objects.get_or_create(user=instance)
+
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    # Kiểm tra xem user này đã có profile chưa trước khi save
     if hasattr(instance, 'profile'):
         instance.profile.save()
     else:
-        # Nếu chưa có (trường hợp user cũ), thì tạo mới luôn
         Profile.objects.create(user=instance)
+
+
+# ==========================================
+# CHAT
+# === FIX 12: Thêm optional FK tới User ===
+# ==========================================
+
+class ChatMessage(models.Model):
+    session_id = models.CharField(max_length=255, db_index=True)
+    # Nếu user đã đăng nhập, lưu lại để tra lịch sử
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='chat_messages'
+    )
+    role = models.CharField(max_length=10)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.session_id} - {self.role}: {self.content[:30]}"
+
+
+# ==========================================
+# ĐÁNH GIÁ SẢN PHẨM
+# ==========================================
+
+class Review(models.Model):
+    RATING_CHOICES = [(i, i) for i in range(1, 6)]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name} ({self.rating}★)"
+
+    @staticmethod
+    def user_can_review(user, product):
+        if not user or not user.is_authenticated:
+            return False, "Bạn cần đăng nhập để đánh giá."
+
+        has_purchased = OrderItem.objects.filter(
+            order__user=user,
+            order__status='delivered',
+            variant__product=product
+        ).exists()
+
+        if not has_purchased:
+            return False, "Bạn cần mua và nhận hàng thành công mới được đánh giá."
+
+        already_reviewed = Review.objects.filter(user=user, product=product).exists()
+        if already_reviewed:
+            return False, "Bạn đã đánh giá sản phẩm này rồi."
+
+        return True, "OK"

@@ -1,0 +1,615 @@
+/* =============================================
+   review.css — Đánh giá sản phẩm
+   Phong cách: Tinh tế, ấm áp, đậm chất thương mại điện tử Việt
+   ============================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
+
+/* ─── SECTION WRAPPER ─────────────────────── */
+.review-section {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    padding: 3rem 1rem 4rem;
+    background: #faf9f7;
+    border-top: 1px solid #ede9e3;
+    margin-top: 2rem;
+}
+
+.review-section__inner {
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.review-section__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1512;
+    letter-spacing: -0.02em;
+    margin-bottom: 2rem;
+    position: relative;
+    padding-bottom: 0.75rem;
+}
+
+.review-section__title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 3rem;
+    height: 3px;
+    background: linear-gradient(90deg, #d4622a, #e8945a);
+    border-radius: 2px;
+}
+
+/* ─── SUMMARY BLOCK ───────────────────────── */
+.review-summary {
+    display: flex;
+    gap: 3rem;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ede9e3;
+    border-radius: 1rem;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.review-summary__score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 100px;
+}
+
+.review-summary__avg {
+    font-size: 3.25rem;
+    font-weight: 700;
+    color: #1a1512;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+.review-summary__total {
+    font-size: 0.78rem;
+    color: #9a9088;
+    font-weight: 500;
+}
+
+.review-summary__bars {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+/* ─── RATING BAR ──────────────────────────── */
+.rating-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.rating-bar__label {
+    font-size: 0.78rem;
+    color: #7a7068;
+    width: 22px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.rating-bar__track {
+    flex: 1;
+    height: 7px;
+    background: #ede9e3;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.rating-bar__fill {
+    height: 100%;
+    background: linear-gradient(90deg, #d4622a, #f0a060);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.rating-bar__count {
+    font-size: 0.78rem;
+    color: #9a9088;
+    width: 20px;
+    flex-shrink: 0;
+}
+
+/* ─── STAR RATING ─────────────────────────── */
+.star-rating {
+    display: flex;
+    gap: 2px;
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #ddd6cc;
+    transition: color 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+}
+
+.star-btn svg {
+    display: block;
+}
+
+.star-btn--filled {
+    color: #e88c30;
+}
+
+.star-btn:not(:disabled):hover {
+    transform: scale(1.15);
+}
+
+.star-rating--sm .star-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.star-rating--md .star-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.star-rating--lg .star-btn svg {
+    width: 26px;
+    height: 26px;
+}
+
+.star-rating--xl .star-btn svg {
+    width: 34px;
+    height: 34px;
+}
+
+.star-rating--readonly .star-btn {
+    cursor: default;
+}
+
+.star-rating--readonly .star-btn:hover {
+    transform: none;
+}
+
+/* ─── CTA BLOCK ───────────────────────────── */
+.review-cta {
+    margin-bottom: 1.5rem;
+}
+
+.review-cta__note {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #7a7068;
+    background: #f3f0eb;
+    border-radius: 0.6rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.review-cta__note svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: #a09488;
+}
+
+.review-cta__note a:hover {
+    transform: translateY(-2px);
+}
+
+.review-cta__note a {
+    transition: all 0.2s ease;
+}
+
+.review-cta__note a:active {
+    transform: translateY(0);
+}
+
+.review-cta__note--warn {
+    background: #fff8f0;
+    color: #b0673d;
+}
+
+.review-cta__note--warn svg {
+    color: #d4622a;
+}
+
+.review-cta__done {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #3a8a5a;
+    background: #f0faf4;
+    border: 1px solid #b6e3c8;
+    border-radius: 0.6rem;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.review-cta__done svg {
+    width: 16px;
+    height: 16px;
+    color: #3a8a5a;
+}
+
+.review-cta__success {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #3a8a5a;
+    margin-top: 0.5rem;
+    animation: fadeInUp 0.3s ease;
+}
+
+.review-cta__success svg {
+    width: 16px;
+    height: 16px;
+}
+
+.review-cta__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #d4622a 0%, #e07840 100%);
+    color: #fff;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.7rem 1.4rem;
+    border: none;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(212, 98, 42, 0.3);
+    margin-bottom: 1rem;
+}
+
+.review-cta__btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.review-cta__btn:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(212, 98, 42, 0.35);
+}
+
+.review-cta__btn:active {
+    transform: translateY(0);
+}
+
+/* ─── REVIEW FORM ─────────────────────────── */
+.review-form {
+    animation: fadeInUp 0.3s ease;
+    margin-bottom: 2rem;
+}
+
+.review-form__inner {
+    background: #fff;
+    border: 1px solid #ede9e3;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.review-form__heading {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1512;
+    margin-bottom: 0.2rem;
+}
+
+.review-form__subheading {
+    font-size: 0.85rem;
+    color: #9a9088;
+    margin-bottom: 1.5rem;
+}
+
+.review-form__field {
+    margin-bottom: 1.25rem;
+}
+
+.review-form__field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4a403a;
+    margin-bottom: 0.5rem;
+}
+
+.review-form__rating-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #d4622a;
+    font-weight: 600;
+    min-height: 1.1em;
+    margin-top: 0.4rem;
+    transition: opacity 0.2s;
+}
+
+.review-form__textarea {
+    width: 100%;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: 0.9rem;
+    color: #1a1512;
+    background: #faf9f7;
+    border: 1.5px solid #ede9e3;
+    border-radius: 0.6rem;
+    padding: 0.8rem 1rem;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    line-height: 1.6;
+}
+
+.review-form__textarea:focus {
+    outline: none;
+    border-color: #d4622a;
+    box-shadow: 0 0 0 3px rgba(212, 98, 42, 0.1);
+    background: #fff;
+}
+
+.review-form__char-count {
+    display: block;
+    text-align: right;
+    font-size: 0.75rem;
+    color: #b0a898;
+    margin-top: 0.3rem;
+}
+
+.review-form__error {
+    font-size: 0.85rem;
+    color: #c0392b;
+    background: #fff5f5;
+    border: 1px solid #fcc;
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.review-form__actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.review-form__cancel {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #7a7068;
+    background: #f3f0eb;
+    border: none;
+    border-radius: 0.6rem;
+    padding: 0.65rem 1.2rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.review-form__cancel:hover {
+    background: #e8e3dc;
+}
+
+.review-form__submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #d4622a, #e07840);
+    border: none;
+    border-radius: 0.6rem;
+    padding: 0.65rem 1.4rem;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 3px 10px rgba(212, 98, 42, 0.25);
+}
+
+.review-form__submit svg {
+    width: 15px;
+    height: 15px;
+}
+
+.review-form__submit:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.review-form__submit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.review-form__spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+/* ─── REVIEW LIST ─────────────────────────── */
+.review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.review-list__empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #b0a898;
+}
+
+.review-list__empty svg {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 0.75rem;
+    display: block;
+    color: #d5cfc8;
+}
+
+.review-list__empty p {
+    font-size: 0.9rem;
+}
+
+/* ─── REVIEW CARD ─────────────────────────── */
+.review-card {
+    background: #fff;
+    border: 1px solid #ede9e3;
+    border-radius: 0.9rem;
+    padding: 1.25rem 1.5rem;
+    transition: box-shadow 0.2s;
+    animation: fadeInUp 0.25s ease both;
+}
+
+.review-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+}
+
+.review-card__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.review-card__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #d4622a, #f0a060);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.review-card__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.review-card__meta {
+    flex: 1;
+}
+
+.review-card__name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #1a1512;
+    margin: 0 0 0.2rem;
+}
+
+.review-card__date {
+    font-size: 0.75rem;
+    color: #b0a898;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.review-card__comment {
+    font-size: 0.875rem;
+    color: #4a403a;
+    line-height: 1.7;
+    margin: 0;
+    padding-left: calc(40px + 0.85rem);
+}
+
+/* ─── SKELETON LOADING ────────────────────── */
+.review-list__loading {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.review-skeleton {
+    height: 90px;
+    background: linear-gradient(90deg, #f3f0eb 25%, #ede9e3 50%, #f3f0eb 75%);
+    background-size: 200% 100%;
+    border-radius: 0.9rem;
+    animation: shimmer 1.4s infinite;
+}
+
+/* ─── KEYFRAMES ───────────────────────────── */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes shimmer {
+    to {
+        background-position: -200% 0;
+    }
+}
+
+/* ─── RESPONSIVE ──────────────────────────── */
+@media (max-width: 640px) {
+    .review-summary {
+        flex-direction: column;
+        gap: 1.25rem;
+        align-items: flex-start;
+    }
+
+    .review-summary__score {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .review-summary__avg {
+        font-size: 2.5rem;
+    }
+
+    .review-form__inner {
+        padding: 1.25rem;
+    }
+
+    .review-form__actions {
+        flex-direction: column;
+    }
+
+    .review-form__cancel,
+    .review-form__submit {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .review-card__comment {
+        padding-left: 0;
+    }
+}

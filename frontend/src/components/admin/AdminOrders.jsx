@@ -31,63 +31,71 @@ const AdminOrders = () => {
         return labels[status] || status;
     };
 
-    if (loading) return <div>Đang tải đơn hàng...</div>;
+    if (loading) return (
+        <div style={{ padding: '100px', textAlign: 'center' }}>
+            <div className="spinner-border text-primary" role="status"></div>
+            <p style={{ marginTop: '20px', color: '#64748b' }}>Đang tải danh sách đơn hàng...</p>
+        </div>
+    );
 
     return (
         <div className="admin-orders">
-            <h2>Quản lý đơn hàng</h2>
-            <table className="admin-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Khách hàng</th>
-                        <th>Tổng tiền</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày tạo</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {orders.map(order => (
-                        <tr key={order.id}>
-                            <td>#{order.id}</td>
-                            <td>{order.full_name}</td>
-                            <td>{order.total_amount}đ</td>
-                            <td>
-                                <span className={`status-badge ${order.status}`}>
-                                    {getStatusLabel(order.status)}
-                                </span>
-                            </td>
-                            <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                            <td>
-                                <button className="view-btn">Chi tiết</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            <style>{`
-                .status-badge {
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                    font-size: 12px;
-                    font-weight: 600;
-                }
-                .status-badge.pending { background: #f1c40f; color: white; }
-                .status-badge.delivered { background: #2ecc71; color: white; }
-                .status-badge.cancelled { background: #e74c3c; color: white; }
-                .status-badge.processing { background: #3498db; color: white; }
-                
-                .view-btn {
-                    padding: 5px 10px;
-                    background: #2c3e50;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                }
-            `}</style>
+            <div className="admin-table-container">
+                <div className="admin-table-header">
+                    <h2>Quản lý đơn hàng</h2>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button className="admin-btn admin-btn-edit">
+                            <i className="bi bi-download"></i>
+                            Xuất báo cáo
+                        </button>
+                    </div>
+                </div>
+                <div className="table-responsive">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Khách hàng</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày đặt</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {orders.map(order => (
+                                <tr key={order.id}>
+                                    <td style={{ fontWeight: '700' }}>#{order.id}</td>
+                                    <td>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontWeight: '600' }}>{order.full_name}</span>
+                                            <span style={{ fontSize: '12px', color: '#64748b' }}>{order.phone}</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: '700' }}>{Number(order.total_amount).toLocaleString()}đ</td>
+                                    <td>
+                                        <span className={`status-badge ${order.status}`}>
+                                            {getStatusLabel(order.status)}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                                            <span style={{ fontSize: '12px', color: '#64748b' }}>{new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button className="admin-btn admin-btn-edit">
+                                            <i className="bi bi-eye"></i>
+                                            Chi tiết
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 };

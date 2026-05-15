@@ -17,21 +17,19 @@ export const CartProvider = ({ children }) => {
     const addToCart = (product, quantity = 1, color, size, idvariant) => {
         setCartItems(prev => {
             const existing = prev.find(item =>
-                item.id === product.id &&
-                item.color === color &&
-                item.size === size
+                item.idvariant === idvariant
             );
             if (existing) {
                 return prev.map(item =>
-                    item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+                    item.idvariant === idvariant ? { ...item, quantity: item.quantity + quantity } : item
                 );
             }
             return [...prev, { ...product, quantity, color, size, idvariant }];
         });
     };
 
-    const removeFromCart = (id) => {
-        setCartItems(prev => prev.filter(item => item.id !== id));
+    const removeFromCart = (idvariant) => {
+        setCartItems(prev => prev.filter(item => item.idvariant !== idvariant));
     };
 
     const clearCart = () => {

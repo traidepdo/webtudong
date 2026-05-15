@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useLocation } from 'react-router-dom';
+import { useSearchParams, useLocation, Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
 import api from '../api';
 import aos from 'aos';
 import 'aos/dist/aos.css';
+import ListPageSEO from '../components/ListPageSEO';
 
 const Products = () => {
     const [products, setProducts] = useState([]);
@@ -113,16 +114,26 @@ const Products = () => {
 
     return (
         <div className="products-page">
+            <ListPageSEO
+                products={filteredProducts}
+                pageTitle="Danh sách sản phẩm | Routine"
+                pageDescription="Khám phá các sản phẩm thời trang cao cấp tại Routine"
+                baseUrl={window.location.origin}
+            />
             <Header scrolled={true} />
 
             <div className="catalog-banner">
                 <h1>Blue Sky</h1>
                 <p>Khám phá bộ sưu tập mới nhất từ Blue Sky</p>
+
             </div>
 
             <main className="catalog-container">
                 <aside className="filter-sidebar">
                     <div className="filter-group">
+                        <nav className="breadcrumb" style={{ marginTop: '15px', color: '#000' }}>
+                            <Link to="/" style={{ color: '#000', textDecoration: 'none' }}>Trang chủ</Link> / <span style={{ color: '#000' }}>{selectedCategory === 'all' ? 'Tất cả sản phẩm' : selectedCategory}</span>
+                        </nav>
                         <h3>Tìm kiếm</h3>
                         <div className="search-box">
                             <input
@@ -203,6 +214,9 @@ const Products = () => {
                 .products-page {
                     background: #fcfcfc;
                     min-height: 100vh;
+                }
+                .product-name a {
+                    color: #121212;
                 }
 
                 .catalog-container {
@@ -308,6 +322,7 @@ const Products = () => {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
                     gap: 30px;
+                    align-items: start;
                 }
 
                 .no-results {
