@@ -5,8 +5,9 @@ from .views import (
     CategoryViewSet, ProductViewSet, ProductVariantViewSet,
     OrderViewSet, RegisterView, UserProfileView, home,
     UserViewSet, AdminStatsView, ColorViewSet, SizeViewSet, ProductImageViewSet, related_products,product_chat, submit_checkout, chat_history, ReviewListCreateView, ReviewEligibilityView,
-    AllReviewsViewSet
-
+    AllReviewsViewSet,BrandViewSet,
+    BlogCategoryListView, BlogPostListView, BlogPostDetailView,
+    BlogCommentListCreateView, BlogCommentDeleteView
 )
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
@@ -18,7 +19,7 @@ router.register(r'colors', ColorViewSet, basename='color')
 router.register(r'sizes', SizeViewSet, basename='size')
 router.register(r'product-images', ProductImageViewSet, basename='product-image')
 router.register(r'reviews', AllReviewsViewSet, basename='review')
-
+router.register(r'brands', BrandViewSet, basename='brand')
  
 
 urlpatterns = [
@@ -37,5 +38,10 @@ urlpatterns = [
     path('api/chat/history/', chat_history, name='chat_history'),
     path('api/submit-checkout/', submit_checkout, name='submit_checkout'),
     
-
+    # Blog URLs
+    path('api/blog/categories/', BlogCategoryListView.as_view(), name='blog-categories'),
+    path('api/blog/posts/', BlogPostListView.as_view(), name='blog-posts'),
+    path('api/blog/posts/<slug:slug>/', BlogPostDetailView.as_view(), name='blog-post-detail'),
+    path('api/blog/posts/<slug:slug>/comments/', BlogCommentListCreateView.as_view(), name='blog-post-comments'),
+    path('api/blog/comments/<int:pk>/', BlogCommentDeleteView.as_view(), name='blog-comment-delete'),
 ]

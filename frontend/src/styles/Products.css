@@ -1,0 +1,1042 @@
+/* ============================================================
+   Products.css — Routine Style — Light Minimal Theme
+   Khớp với App.css: Header trắng, chữ đen, phong cách thanh lịch
+   ============================================================ */
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+.ps-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 14px;
+    color: #555;
+    background: #fff;
+}
+
+.ps-spinner {
+    width: 36px;
+    height: 36px;
+    border: 2.5px solid #eee;
+    border-top-color: #111;
+    border-radius: 50%;
+    animation: ps-spin 0.75s linear infinite;
+}
+
+@keyframes ps-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================================
+   PAGE WRAPPER
+   ============================================================ */
+.ps-page {
+    background: #ffffff;
+    color: #111111;
+    min-height: 100vh;
+}
+
+/* ============================================================
+   QUY TẮC 2+5: BANNER — H1 + Breadcrumb
+   ============================================================ */
+.ps-banner {
+    background: #f8f8f8;
+    padding: 60px 5% 40px;
+    text-align: center;
+    position: relative;
+    border-bottom: 1px solid #eee;
+}
+
+.ps-banner-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* Breadcrumb */
+.ps-crumb-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+    gap: 6px;
+    font-size: 12.5px;
+    color: #888;
+}
+
+.ps-crumb-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ps-crumb-item a {
+    color: #666;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.ps-crumb-item a:hover {
+    color: #111;
+}
+
+.ps-crumb-item [aria-current="page"] {
+    color: #111;
+    font-weight: 600;
+}
+
+.ps-crumb-sep {
+    color: #ccc;
+    font-size: 14px;
+}
+
+/* H1 — QUY TẮC 2 */
+.ps-banner-title {
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+    color: #111;
+    margin: 0 0 12px;
+    line-height: 1.1;
+}
+
+/* Mô tả ngắn — QUY TẮC 2 */
+.ps-banner-desc {
+    font-size: 14.5px;
+    color: #666;
+    line-height: 1.7;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.ps-banner-desc strong {
+    color: #111;
+    font-weight: 600;
+}
+
+/* ============================================================
+   QUY TẮC 3: SUB-CATEGORIES
+   ============================================================ */
+.ps-subcategories {
+    background: #ffffff;
+    border-bottom: 1px solid #eee;
+    padding: 14px 5%;
+    position: sticky;
+    top: 70px;
+    /* Dưới header */
+    z-index: 50;
+}
+
+.ps-subcategories-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.ps-subcat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 100px;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    color: #555;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.ps-subcat-chip:hover {
+    border-color: #111;
+    color: #111;
+    background: #f9f9f9;
+}
+
+.ps-subcat-chip--active {
+    background: #111;
+    border-color: #111;
+    color: #fff;
+    font-weight: 600;
+}
+
+.ps-subcat-chip--active:hover {
+    color: #fff;
+    background: #333;
+    border-color: #333;
+}
+
+/* ============================================================
+   QUY TẮC 4: BEST SELLERS
+   ============================================================ */
+.ps-bestsellers {
+    padding: 50px 5%;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+}
+
+.ps-bestsellers-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.ps-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.ps-section-badge {
+    background: #ef4444;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.ps-section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+    margin: 0;
+}
+
+.ps-section-sub {
+    font-size: 13.5px;
+    color: #666;
+    margin: 0;
+}
+
+.ps-bestsellers-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.ps-bestseller-card {
+    position: relative;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 12px;
+    transition: box-shadow 0.2s;
+}
+
+.ps-bestseller-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.ps-bestseller-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 2;
+    background: #111;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* ============================================================
+   QUY TẮC 6: STAR RATING
+   ============================================================ */
+.ps-stars {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 0 8px;
+}
+
+.ps-stars-count {
+    font-size: 11.5px;
+    color: #888;
+    margin-left: 4px;
+}
+
+/* ============================================================
+   QUY TẮC 5: BRANDS
+   ============================================================ */
+.ps-brands {
+    padding: 30px 5%;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+}
+
+.ps-brands-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.ps-brands-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #333;
+    margin: 0 0 16px;
+}
+
+.ps-brands-scroll {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.ps-brand-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    text-decoration: none;
+    transition: all 0.2s;
+    min-width: 100px;
+    height: 48px;
+}
+
+.ps-brand-item:hover,
+.ps-brand-item--active {
+    border-color: #111;
+    background: #fafafa;
+}
+
+.ps-brand-logo {
+    object-fit: contain;
+    filter: grayscale(1) opacity(0.7);
+    transition: all 0.2s;
+    max-height: 24px;
+}
+
+.ps-brand-item:hover .ps-brand-logo,
+.ps-brand-item--active .ps-brand-logo {
+    filter: grayscale(0) opacity(1);
+}
+
+.ps-brand-label {
+    display: none;
+}
+
+.ps-brand-name-only {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+}
+
+.ps-brand-item:hover .ps-brand-name-only,
+.ps-brand-item--active .ps-brand-name-only {
+    color: #111;
+}
+
+/* ============================================================
+   MOBILE BAR
+   ============================================================ */
+.ps-mobile-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 5%;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 60px;
+    z-index: 40;
+}
+
+.ps-count-mobile {
+    font-size: 13px;
+    color: #666;
+}
+
+.ps-count-mobile strong {
+    color: #111;
+}
+
+.ps-mobile-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ps-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+    color: #111;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    position: relative;
+}
+
+.ps-filter-dot {
+    width: 6px;
+    height: 6px;
+    background: #ef4444;
+    border-radius: 50%;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+}
+
+/* ============================================================
+   QUY TẮC 7+8: LAYOUT — Sidebar + Content
+   ============================================================ */
+.ps-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 5%;
+    align-items: start;
+}
+
+/* SIDEBAR */
+.ps-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 90;
+}
+
+.ps-sidebar {
+    background: #fff;
+    position: sticky;
+    top: 120px;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+}
+
+.ps-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.ps-sidebar::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 4px;
+}
+
+.ps-sidebar-head {
+    display: none;
+}
+
+/* Filter groups */
+.ps-filter-group {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.ps-filter-group input {
+    padding: 0px;
+    margin: 0px;
+}
+
+.ps-filter-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.ps-filter-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    margin: 0 0 14px;
+    text-transform: uppercase;
+}
+
+/* Search box */
+.ps-search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.ps-search-icon {
+    position: absolute;
+    left: 12px;
+    color: #888;
+    pointer-events: none;
+}
+
+.ps-search-box input {
+    width: 100%;
+    background: #f8f8f8;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 10px 36px 10px 36px;
+    color: #111;
+    font-size: 13.5px;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.ps-search-box input:focus {
+    border-color: #111;
+    background: #fff;
+}
+
+.ps-search-box input::placeholder {
+    color: #888;
+}
+
+.ps-search-clear {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+}
+
+/* Category list */
+.ps-cat-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ps-cat-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: #555;
+    font-size: 13.5px;
+    font-weight: 400;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.ps-cat-btn:hover {
+    background: #f9f9f9;
+    color: #111;
+}
+
+.ps-cat-btn--active {
+    background: #111;
+    color: #fff;
+    font-weight: 500;
+}
+
+.ps-cat-dot {
+    display: none;
+}
+
+.ps-cat-count {
+    margin-left: auto;
+    font-size: 11.5px;
+    color: #888;
+}
+
+.ps-cat-btn--active .ps-cat-count {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Price slider */
+.ps-price-val {
+    color: #111;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.ps-slider {
+    width: 100%;
+    accent-color: #111;
+    margin: 8px 0 10px;
+    cursor: pointer;
+}
+
+.ps-price-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #888;
+}
+
+/* Size grid */
+.ps-size-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ps-size-btn {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    color: #555;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 40px;
+    text-align: center;
+}
+
+.ps-size-btn:hover {
+    border-color: #111;
+    color: #111;
+}
+
+.ps-size-btn--active {
+    background: #111;
+    border-color: #111;
+    color: #fff;
+}
+
+/* Select */
+.ps-select {
+    width: 100%;
+    background: #f8f8f8;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: #111;
+    font-size: 13.5px;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Reset button */
+.ps-reset-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    color: #555;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 12px;
+}
+
+.ps-reset-btn:hover {
+    border-color: #111;
+    color: #111;
+}
+
+/* Screen reader only */
+.ps-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ============================================================
+   QUY TẮC 7+8: CONTENT AREA
+   ============================================================ */
+.ps-content {
+    min-width: 0;
+}
+
+.ps-content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.ps-results {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+.ps-results strong {
+    color: #111;
+}
+
+.ps-results em {
+    color: #111;
+    font-style: normal;
+    font-weight: 600;
+}
+
+/* Sort */
+.ps-sort-desktop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ps-sort-select {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 12px;
+    color: #111;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+
+/* QUY TẮC 8: Product Grid */
+.ps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.ps-grid-item {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Load more */
+.ps-load-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 48px;
+}
+
+.ps-load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 32px;
+    background: transparent;
+    border: 1px solid #111;
+    border-radius: 100px;
+    color: #111;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ps-load-more-btn:hover {
+    background: #111;
+    color: #fff;
+}
+
+.ps-load-more-count {
+    opacity: 0.6;
+}
+
+/* Empty state */
+.ps-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+    gap: 12px;
+}
+
+.ps-empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111;
+    margin: 0;
+}
+
+.ps-empty-sub {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+.ps-empty-reset {
+    margin-top: 16px;
+    padding: 10px 24px;
+    background: #111;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* ============================================================
+   QUY TẮC 9: SEO CONTENT
+   ============================================================ */
+.ps-seo-content {
+    background: #f8f8f8;
+    border-top: 1px solid #eee;
+    padding: 60px 5%;
+}
+
+.ps-seo-content-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.ps-seo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    margin-bottom: 40px;
+}
+
+.ps-seo-h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111;
+    margin: 0 0 16px;
+}
+
+.ps-seo-article p {
+    font-size: 14.5px;
+    line-height: 1.8;
+    color: #555;
+    margin: 0 0 16px;
+}
+
+.ps-seo-h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111;
+    margin: 24px 0 12px;
+}
+
+.ps-seo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ps-seo-list li {
+    font-size: 14px;
+    color: #555;
+    padding-left: 16px;
+    position: relative;
+}
+
+.ps-seo-list li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #111;
+}
+
+/* FAQ */
+.ps-faq {
+    display: flex;
+    flex-direction: column;
+}
+
+.ps-faq-item {
+    border-bottom: 1px solid #eee;
+}
+
+.ps-faq-item:first-of-type {
+    border-top: 1px solid #eee;
+    margin-top: 12px;
+}
+
+.ps-faq-q {
+    padding: 16px 0;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #111;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ps-faq-q::-webkit-details-marker {
+    display: none;
+}
+
+.ps-faq-q::after {
+    content: '+';
+    font-size: 18px;
+}
+
+details[open] .ps-faq-q::after {
+    transform: rotate(45deg);
+}
+
+.ps-faq-a {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.7;
+    padding: 0 0 16px;
+    margin: 0;
+}
+
+/* Trust row */
+.ps-trust-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 40px;
+}
+
+.ps-trust-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+}
+
+.ps-trust-icon {
+    font-size: 28px;
+}
+
+.ps-trust-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #111;
+}
+
+.ps-trust-desc {
+    font-size: 12.5px;
+    color: #666;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+    .ps-layout {
+        grid-template-columns: 1fr;
+        padding-top: 24px;
+    }
+
+    .ps-sidebar {
+
+        display: none;
+        /* Hide default sidebar, use overlay */
+    }
+
+    .ps-mobile-bar {
+        display: flex;
+    }
+
+    .ps-sidebar.ps-sidebar--open {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 300px;
+        height: 100vh;
+        z-index: 100;
+        padding: 24px;
+        background: #fff;
+        border-right: 1px solid #eee;
+        overflow-y: auto;
+
+    }
+
+    .ps-sidebar-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .ps-sidebar-title {
+        font-weight: 600;
+        font-size: 15px;
+        color: #111;
+    }
+
+    .ps-sidebar-close {
+        display: block;
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: #888;
+        cursor: pointer;
+    }
+
+    .ps-overlay {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    .ps-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ps-seo-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
+    .ps-trust-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .ps-bestsellers-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ps-banner {
+        padding: 40px 5% 30px;
+    }
+}

@@ -1,7 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, generics, permissions, filters
-from .models import Category, Product, ProductVariant, Order, Color, Size, ProductImage, ChatMessage, OrderItem, Review
-from .serializers import CategorySerializer, ProductSerializer, ProductVariantSerializer, OrderSerializer, UserSerializer, RegisterSerializer, ColorSerializer, SizeSerializer, ProductImageSerializer, ReviewSerializer
+from .models import Category, Product, ProductVariant, Order, Color, Size, ProductImage, ChatMessage, OrderItem, Review, Brand, BlogPost, BlogCategory, BlogComment
+from .serializers import CategorySerializer, ProductSerializer, ProductVariantSerializer, OrderSerializer, UserSerializer, RegisterSerializer, ColorSerializer, SizeSerializer, ProductImageSerializer, ReviewSerializer, BrandSerializer, BlogPostListSerializer, BlogPostDetailSerializer, BlogCommentSerializer, BlogCategorySerializer
 from django.contrib.auth.models import User
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,6 +13,7 @@ from rest_framework.decorators import api_view,permission_classes
 import anthropic
 from rest_framework.permissions import AllowAny
 import re
+from django_filters.rest_framework import DjangoFilterBackend
 
 from langchain_ollama import OllamaLLM
 from langchain_community.chat_message_histories import ChatMessageHistory
@@ -820,3 +821,148 @@ class AllReviewsViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all().select_related('user', 'product').order_by('-created_at')
     serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAdminUser]
+
+
+class BrandViewSet(viewsets.ModelViewSet):
+    queryset = Brand.objects.filter(is_active=True)
+    serializer_class = BrandSerializer
+class IsAdminOrReadOnly(permissions.BasePermission):
+    """
+    Chỉ admin (is_staff) mới được POST/PUT/DELETE.
+    Người dùng thường chỉ được GET.
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user and request.user.is_staff
+ 
+ 
+# ============================================================
+# BLOG CATEGORY
+# ============================================================
+ 
+class BlogCategoryListView(generics.ListCreateAPIView):
+    """
+    GET  /api/blog/categories/       → Danh sách danh mục (public)
+    POST /api/blog/categories/       → Tạo danh mục (admin only)
+    """
+    queryset = BlogCategory.objects.all()
+    serializer_class = BlogCategorySerializer
+    permission_classes = [IsAdminOrReadOnly]
+ 
+ 
+# ============================================================
+# BLOG POST — DANH SÁCH & TẠO MỚI
+# ============================================================
+ 
+class BlogPostListView(generics.ListCreateAPIView):
+    """
+    GET  /api/blog/posts/            → Danh sách bài viết đã đăng (public)
+    POST /api/blog/posts/            → Tạo bài viết mới (admin only)
+ 
+    Query params hỗ trợ:
+      ?category=<slug>               → Lọc theo danh mục
+      ?search=<từ khóa>              → Tìm theo tiêu đề
+      ?status=draft|published        → Admin lọc theo trạng thái
+    """
+    serializer_class = BlogPostListSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status']
+    search_fields = ['title', 'excerpt', 'content']
+    ordering_fields = ['published_at', 'views', 'created_at']
+    ordering = ['-published_at']
+ 
+    def get_queryset(self):
+        qs = BlogPost.objects.select_related('author', 'category')
+ 
+        # Người thường chỉ thấy bài đã đăng
+        if not (self.request.user and self.request.user.is_staff):
+            qs = qs.filter(status='published')
+ 
+        # Lọc theo category slug
+        category_slug = self.request.query_params.get('category')
+        if category_slug:
+            qs = qs.filter(category__slug=category_slug)
+ 
+        return qs
+ 
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return BlogPostDetailSerializer
+        return BlogPostListSerializer
+ 
+ 
+# ============================================================
+# BLOG POST — CHI TIẾT, SỬA, XÓA
+# ============================================================
+ 
+class BlogPostDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET    /api/blog/posts/<slug>/   → Chi tiết bài viết + tăng view (public)
+    PUT    /api/blog/posts/<slug>/   → Sửa bài viết (admin only)
+    PATCH  /api/blog/posts/<slug>/   → Sửa một phần (admin only)
+    DELETE /api/blog/posts/<slug>/   → Xóa bài viết (admin only)
+    """
+    serializer_class = BlogPostDetailSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    lookup_field = 'slug'
+ 
+    def get_queryset(self):
+        qs = BlogPost.objects.select_related('author', 'category').prefetch_related(
+            'related_products', 'comments__user__profile'
+        )
+        # Admin thấy cả draft
+        if self.request.user and self.request.user.is_staff:
+            return qs
+        return qs.filter(status='published')
+ 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Tăng view mỗi lần có người đọc
+        BlogPost.objects.filter(pk=instance.pk).update(views=instance.views + 1)
+        instance.refresh_from_db(fields=['views'])
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+ 
+ 
+# ============================================================
+# BLOG COMMENT
+# ============================================================
+ 
+class BlogCommentListCreateView(generics.ListCreateAPIView):
+    """
+    GET  /api/blog/posts/<slug>/comments/   → Danh sách comment của bài viết (public)
+    POST /api/blog/posts/<slug>/comments/   → Đăng comment (phải đăng nhập)
+    """
+    serializer_class = BlogCommentSerializer
+ 
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+ 
+    def get_queryset(self):
+        post = get_object_or_404(BlogPost, slug=self.kwargs['slug'], status='published')
+        return BlogComment.objects.filter(post=post).select_related('user__profile')
+ 
+    def perform_create(self, serializer):
+        post = get_object_or_404(BlogPost, slug=self.kwargs['slug'], status='published')
+        serializer.save(user=self.request.user, post=post)
+ 
+ 
+class BlogCommentDeleteView(generics.DestroyAPIView):
+    """
+    DELETE /api/blog/comments/<id>/   → Xóa comment (chủ comment hoặc admin)
+    """
+    serializer_class = BlogCommentSerializer
+ 
+    def get_permissions(self):
+        return [permissions.IsAuthenticated()]
+ 
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return BlogComment.objects.all()
+        # Người dùng thường chỉ xóa được comment của mình
+        return BlogComment.objects.filter(user=user)

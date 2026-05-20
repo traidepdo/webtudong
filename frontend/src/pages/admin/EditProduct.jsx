@@ -18,6 +18,7 @@ export default function EditProduct() {
     const [categories, setCategories] = useState([]);
     const [colors, setColors] = useState([]);
     const [sizes, setSizes] = useState([]);
+    const [brands, setBrands] = useState([]);
 
     const [form, setForm] = useState({
         name: "", category: "", description: "",
@@ -36,16 +37,18 @@ export default function EditProduct() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [catRes, colRes, sizeRes, prodRes] = await Promise.all([
+                const [catRes, colRes, sizeRes, prodRes, brandRes] = await Promise.all([
                     api.get("/categories/"),
                     api.get("/colors/"),
                     api.get("/sizes/"),
-                    api.get(`/products/${slug}/`)
+                    api.get(`/products/${slug}/`),
+                    api.get("/brands/")
                 ]);
 
                 setCategories(catRes.data?.results ?? catRes.data ?? []);
                 setColors(colRes.data?.results ?? colRes.data ?? []);
                 setSizes(sizeRes.data?.results ?? sizeRes.data ?? []);
+                setBrands(brandRes.data?.results ?? brandRes.data ?? []);
 
                 const p = prodRes.data;
                 setForm({
@@ -303,12 +306,16 @@ export default function EditProduct() {
                                     </Field>
 
                                     <Field label="Thương hiệu">
-                                        <input
+                                        <select
                                             value={form.brand}
                                             onChange={e => setField("brand", e.target.value)}
-                                            placeholder="VD: Nike, Adidas..."
                                             style={inputStyle()}
-                                        />
+                                        >
+                                            <option value="">-- Chọn thương hiệu --</option>
+                                            {brands.map(b => (
+                                                <option key={b.id} value={b.id}>{b.name}</option>
+                                            ))}
+                                        </select>
                                     </Field>
 
                                     <Field label="Mô tả">

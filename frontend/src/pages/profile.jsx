@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from "axios";
 import Header from '../components/Header';
+import "../styles/Profile.css";
 
 function Profile() {
     const token = localStorage.getItem('access_token');
@@ -128,110 +129,6 @@ function Profile() {
                     </div>
                 </div>
             </div>
-
-            <style jsx>{`
-            .profile-page {
-                background-color: #f4f7f9;
-                min-height: 100vh;
-                padding-top: 100px;
-            }
-            .profile-container {
-                display: flex;
-                justify-content: center;
-                padding: 20px;
-            }
-            .profile-card {
-                background: white;
-                width: 100%;
-                max-width: 800px;
-                border-radius: 15px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-                overflow: hidden;
-            }
-            .profile-header {
-                background: linear-gradient(135deg, #333 0%, #000 100%);
-                padding: 40px 20px;
-                text-align: center;
-                color: white;
-            }
-            .profile-avatar {
-                width: 120px;
-                height: 120px;
-                border-radius: 50%;
-                border: 4px solid white;
-                object-fit: cover;
-                margin-bottom: 15px;
-            }
-            .avatar-placeholder {
-                width: 120px;
-                height: 120px;
-                border-radius: 50%;
-                background: #666;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 40px;
-                margin: 0 auto 15px;
-                border: 4px solid white;
-            }
-            .username-tag {
-                display: inline-block;
-                background: rgba(255,255,255,0.2);
-                padding: 4px 12px;
-                border-radius: 20px;
-                font-size: 14px;
-                margin-top: 5px;
-            }
-            .profile-body {
-                padding: 40px;
-            }
-            .info-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 30px;
-                margin-bottom: 40px;
-            }
-            .info-item label {
-                display: block;
-                font-size: 13px;
-                color: #888;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-bottom: 8px;
-            }
-            .info-item p {
-                font-size: 16px;
-                font-weight: 500;
-                color: #333;
-                margin: 0;
-            }
-            .edit-btn {
-                width: 100%;
-                padding: 12px;
-                background: #333;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: 0.3s;
-            }
-            .edit-btn:hover {
-                background: #000;
-                transform: translateY(-2px);
-            }
-            @media (max-width: 600px) {
-                .profile-body { padding: 20px; }
-                .info-grid { grid-template-columns: 1fr; }
-            }
-            input {
-                    width: 100%;
-                    padding: 10px;
-                    border: 1px solid #ddd;
-                    border-radius: 5px;
-                    margin-top: 5px;
-                }
-        `}</style>
         </div>
     );
 }

@@ -1,446 +1,344 @@
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import "../App.css"
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import ProductCard from "../components/ProductCard";
-import Typewriter from 'typewriter-effect';
-import AOS from "aos";
-import "aos/dist/aos.css";
-import { motion, useScroll, useTransform, useSpring, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { useRef } from "react";
-import WebsiteSEO from "../components/WebsiteSEO";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import ProductCard from "../components/ProductCard";
+import "../styles/Home.css";
+
+/* Hook: trigger animation when element enters viewport */
+function useReveal() {
+    const ref = useRef(null);
+    useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    el.classList.add("is-visible");
+                    observer.unobserve(el);
+                }
+            },
+            { threshold: 0.12 }
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+    return ref;
+}
 
 function Home({ scrolled }) {
-    const [listProduct, setListProduct] = useState("all");
-    const [product, setProduct] = useState([]);
-    const [filter, setFilter] = useState([]);
-    const [categoryProducts, setCategoryProducts] = useState([]);
+    const [featuredProducts, setFeaturedProducts] = useState([]);
+    const [brands, setBrands] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const [viewMore, setViewMore] = useState("all");
-
-    useEffect(() => {
-        axios.get("http://127.0.0.1:8000/api/products/")
-            .then(res => setProduct(res.data))
-            .catch(error => console.log(error));
-
-        axios.get("http://127.0.0.1:8000/api/products/?category=office")
-            .then(res => setCategoryProducts(res.data.slice(0, 3)))
-            .catch(error => console.log(error));
-    }, [])
-    useEffect(() => {
-        if (listProduct === 'all') {
-            setFilter(product);
-        }
-        else {
-            setFilter(product.filter(item => item.category == listProduct));
-        }
-    }, [listProduct, product])
+    const categoriesRef = useReveal();
+    const productsRef = useReveal();
+    const featuresRef = useReveal();
+    const aboutRef = useReveal();
+    const ctaRef = useReveal();
 
     useEffect(() => {
-        AOS.init({
-            duration: 800,
-            once: true,
-            offset: 80,
-            easing: 'ease-out-cubic',
-        });
+        const fetchData = async () => {
+            try {
+                const [productsRes, brandsRes] = await Promise.all([
+                    axios.get("http://127.0.0.1:8000/api/products/"),
+                    axios.get("http://127.0.0.1:8000/api/brands/"),
+                ]);
+                setFeaturedProducts(productsRes.data.slice(0, 8));
+                setBrands(brandsRes.data);
+            } catch (err) {
+                console.error("Lỗi khi tải dữ liệu:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, []);
 
+    const getCategoryImage = (slug, image) => {
+        if (image && !image.includes("placeholder")) return image;
 
-    const slides = [
+        // Map slug to high-quality Unsplash fashion images (Focusing on Women's Fashion)
+        const imageMap = {
+            'vay': 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=600&q=80', // Beautiful dress
+            'van-phong': 'https://images.unsplash.com/photo-1485230895905-ef25ba22002f?w=600&q=80', // Office wear
+            'hien-dai': 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80', // Modern/Trendy
+            'co-trang': 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=600&q=80', // Vintage/Traditional
+
+            // Other possible slugs
+            'ao-so-mi': 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80',
+            'ao-thun': 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
+            'quan-jean': 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&q=80',
+            'vay-dam': 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80',
+            'phu-kien': 'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=600&q=80',
+        };
+
+        return imageMap[slug] || 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80'; // Default women's fashion fallback
+    };
+
+    const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const categories = [
         {
-            img: "https://www.yellowbrick.co/wp-content/uploads/2023/08/fashion_blog_styling_blog_two-models-min-1024x683.jpg",
-            title: "Thời trang hiện đại",
-            content: "Routine.vn không chỉ đơn thuần là một nền tảng thương mại điện tử, mà là một không gian nghệ thuật trực tuyến, nơi phong cách thanh lịch và nhịp sống hiện đại giao thoa.Đại diện cho tư duy thời trang 'Look Smart' – tinh giản, sắc sảo và đầy tính ứng dụng, website của Routine mang đến cho giới mộ điệu một lăng kính mới về thời trang Việt Nam cao cấp, được chế tác tỉ mỉ để tôn vinh vóc dáng người Á Đông.",
+            id: 1,
+            title: "Váy",
+            link: "/products/dress",
+            imgSrc: "https://germe.vn/wp-content/uploads/2024/05/5.png"
         },
         {
-            img: "https://static.fibre2fashion.com//articleresources/images/23/2287/SS988ebe_Small.jpg",
-            title: "Tôn Vinh Chất Liệu Bền Vững",
-            content: "Thể hiện tầm nhìn của một thương hiệu thời trang tiên phong, Routine.vn là nơi khách hàng có thể tiếp cận với các bộ sưu tập 'Thời trang Xanh'. Những thiết kế tại đây ưu tiên ứng dụng kỹ thuật dệt may tiên tiến từ các chất liệu sinh thái như sợi bã cà phê, sợi tre tự nhiên (bamboo) hay vật liệu tái chế Repreve, hướng tới giá trị cốt lõi về phát triển bền vững.",
+            id: 2,
+            title: "Áo",
+            link: "/products/ao",
+            imgSrc: "https://bizweb.dktcdn.net/thumb/1024x1024/100/119/564/products/ao-thun-nu-han-quoc-s5952.jpg?v=1686128637410" // Ảnh ví dụ, bạn thay bằng ảnh thật
         },
         {
-            img: "https://mpics-cdn-acc.mgronline.com/pics/Images/569000002172201.JPEG.webp",
-            title: "Thời trang hiện đại",
-            content: "Routine.vn không chỉ đơn thuần là một nền tảng thương mại điện tử, mà là một không gian nghệ thuật trực tuyến, nơi phong cách thanh lịch và nhịp sống hiện đại giao thoa.Đại diện cho tư duy thời trang 'Look Smart' – tinh giản, sắc sảo và đầy tính ứng dụng, website của Routine mang đến cho giới mộ điệu một lăng kính mới về thời trang Việt Nam cao cấp, được chế tác tỉ mỉ để tôn vinh vóc dáng người Á Đông.",
+            id: 3,
+            title: "Chân váy",
+            link: "/products?category=chan-vay",
+            imgSrc: "https://pos.nvncdn.com/f567fc-206017/ps/20240930_UYEZ7HBB7S.jpeg?v=1727670170"
+        },
+        {
+            id: 4,
+            title: "Quần",
+            link: "/products?category=quan",
+            imgSrc: "https://aaajeans.com/wp-content/uploads/2024/07/wld02_IN-3.jpg"
         }
     ];
 
-    const { scrollY } = useScroll();
-    const videoYRaw = useTransform(scrollY, [0, 600], [0, 80]);
-    const videoY = useSpring(videoYRaw, { stiffness: 80, damping: 25, mass: 0.6 });
-    const opacity = useTransform(scrollY, [0, 400], [1, 0]);
-
-    // Section Refs
-    const horizontalRef = useRef(null);
-    const clipRef = useRef(null);
-
-    // Horizontal Scroll Logic
-    const { scrollYProgress: horizontalProgress } = useScroll({
-        target: horizontalRef,
-        offset: ["start start", "end end"]
-    });
-    const horizontalScrollRaw = useTransform(horizontalProgress, [0, 1], ["0%", "-55%"]);
-    const horizontalScroll = useSpring(horizontalScrollRaw, { stiffness: 60, damping: 20, mass: 0.5 });
-    const horizontalBgText = useTransform(horizontalProgress, [0, 1], ["0%", "-20%"]);
-
-    // ── OFFICE SECTION scroll parallax ──────────────────────
-    const { scrollYProgress: clipProgress } = useScroll({
-        target: clipRef,
-        offset: ["start end", "end start"]
-    });
-
-    // Background text parallax
-    const bgTextX = useTransform(scrollY, [0, 2000], [0, -800]);
-
     return (
-        <div>
+        <div className="home-page">
             <Helmet>
-                <title>Trang chủ | Routine - Thời trang hiện đại</title>
-                <meta name="description" content="Khám phá bộ sưu tập thời trang công sở và dạo phố hiện đại, thanh lịch tại Routine. Tôn vinh vóc dáng người Á Đông với chất liệu bền vững." />
+                <title>Trang chủ – Routine | Thời trang cao cấp Việt Nam</title>
+                <meta
+                    name="description"
+                    content="Routine.vn – thời trang cao cấp Việt Nam với thiết kế hiện đại, chất liệu bền vững. Khám phá áo sơ mi, quần, váy và phụ kiện tôn dáng người Á Đông."
+                />
+                <meta
+                    name="keywords"
+                    content="thời trang việt nam, áo sơ mi cao cấp, quần công sở, váy đầm, thời trang bền vững, routine fashion"
+                />
+                <link rel="canonical" href={siteUrl} />
+
+                <meta property="og:type" content="website" />
+                <meta property="og:title" content="Routine – Thời trang cao cấp Việt Nam" />
+                <meta property="og:description" content="Khám phá bộ sưu tập thời trang cao cấp, thiết kế hiện đại, chất liệu bền vững." />
+                <meta property="og:url" content={siteUrl} />
+                <meta property="og:image" content={`${siteUrl}/og-image.jpg`} />
+
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "WebSite",
+                        name: "Routine",
+                        description: "Thời trang cao cấp Việt Nam với thiết kế hiện đại, chất liệu bền vững",
+                        url: siteUrl,
+                        logo: `${siteUrl}/logo.png`,
+                        potentialAction: {
+                            "@type": "SearchAction",
+                            target: `${siteUrl}/products?search={search_term_string}`,
+                            "query-input": "required name=search_term_string",
+                        },
+                    })}
+                </script>
             </Helmet>
-            <WebsiteSEO
-                pageTitle="Trang chủ | Routine - Thời trang hiện đại"
-                pageDescription="Khám phá bộ sưu tập thời trang công sở và dạo phố hiện đại, thanh lịch tại Routine. Tôn vinh vóc dáng người Á Đông với chất liệu bền vững."
-                baseUrl={window.location.origin}
-            />
+
             <Header scrolled={scrolled} />
-            <main>
-                {/* HERO SECTION: AVANT-GARDE SPLIT SCREEN */}
-                <section className="hero-avant-garde">
-                    <div className="hero-grid">
-                        <motion.div
-                            initial={{ x: -100, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-                            className="hero-left"
-                        >
-                            <div className="tagline">SINCE 2026</div>
-                            <h1>
-                                <span className="outline">MODERN</span><br />
-                                <span>REDEFINED</span>
+
+            <main className="home-main" id="main-content">
+
+                {/* ── HERO ── */}
+                <section className="hero-section" aria-label="Giới thiệu Routine">
+                    <div className="hero-container">
+                        <div className="hero-content hero-animate">
+                            <h1 className="hero-title">
+                                Thời Trang Cao Cấp
+                                <span className="hero-subtitle">Tôn Vinh Vóc Dáng Á Đông</span>
                             </h1>
-                            <p>Routine.vn - Nơi nghệ thuật và phong cách giao thoa trong từng sợi vải.</p>
-                            <Link to="/products" className="cta-button-luxury">
-                                EXPLORE COLLECTION
-                                <span className="arrow">→</span>
-                            </Link>
-                        </motion.div>
-
-                        <motion.div
-                            style={{ y: videoY }}
-                            className="hero-right"
-                        >
-                            <div className="video-container-avant">
-                                <video autoPlay loop muted playsInline aria-label="Video giới thiệu bộ sưu tập thời trang Routine 2026">
-                                    <source src="/9604240-uhd_4096_2160_25fps.mp4" type="video/mp4" />
-                                </video>
-                                <div className="video-overlay"></div>
+                            <p className="hero-description">
+                                Routine.vn mang đến bộ sưu tập thời trang hiện đại với chất liệu bền
+                                vững, thiết kế tinh tế và form dáng hoàn hảo cho người Việt Nam.
+                            </p>
+                            <div className="hero-actions">
+                                <Link to="/products" className="btn-primary">
+                                    Khám Phá Bộ Sưu Tập
+                                </Link>
+                                <Link to="/products?category=officee" className="btn-secondary">
+                                    Thời Trang Công Sở
+                                </Link>
                             </div>
-                        </motion.div>
-                    </div>
-
-                    <motion.div
-                        style={{ opacity }}
-                        className="floating-text"
-                    >
-                        STYLE / ELEGANCE / ROUTINE
-                    </motion.div>
-                </section>
-
-                {/* BRAND STORY — alternating rows, nền sáng, chuẩn SEO */}
-                <section className="brand-story-section" aria-label="Câu chuyện thương hiệu Routine">
-                    <div className="brand-story-header">
-                        <span className="bs-eyebrow">Về Routine.vn</span>
-                        <h2 className="bs-title">Thời trang định hình<br /><em>phong cách sống</em></h2>
-                    </div>
-
-                    {[
-                        {
-                            img: "https://www.yellowbrick.co/wp-content/uploads/2023/08/fashion_blog_styling_blog_two-models-min-1024x683.jpg",
-                            tag: "Triết lý thương hiệu",
-                            heading: "Look Smart — Tinh giản, sắc    sảo, ứng dụng cao",
-                            body: "Routine.vn không chỉ là nơi mua sắm — đây là không gian định nghĩa lại thời trang Việt Nam hiện đại. Chúng tôi theo đuổi triết lý Look Smart: mỗi thiết kế đều tinh giản, sắc sảo và tối ưu cho nhịp sống bận rộn của người đô thị.",
-                            alt: "Thời trang hiện đại Routine.vn phong cách Look Smart",
-                        },
-                        {
-                            img: "https://static.fibre2fashion.com//articleresources/images/23/2287/SS988ebe_Small.jpg",
-                            tag: "Chất liệu bền vững",
-                            heading: "Thời trang xanh — Vải sợi sinh thái thế hệ mới",
-                            body: "Routine tiên phong ứng dụng chất liệu sinh thái: sợi bã cà phê kháng khuẩn tự nhiên, sợi tre bamboo mềm mại, vải tái chế Repreve từ chai nhựa. Mặc đẹp — sống xanh — không đánh đổi.",
-                            alt: "Thời trang bền vững Routine chất liệu sinh thái sợi tre bamboo",
-                        },
-                        {
-                            img: "https://mpics-cdn-acc.mgronline.com/pics/Images/569000002172201.JPEG.webp",
-                            tag: "Tôn vinh người Á Đông",
-                            heading: "Form dáng được cắt may riêng cho vóc dáng Việt",
-                            body: "Mỗi sản phẩm tại Routine được nghiên cứu kỹ lưỡng để tôn lên vóc dáng người Á Đông — không rộng thùng thình, không bó cứng nhắc. Chuẩn form từ vai, eo đến chiều dài tay — mặc là vừa.",
-                            alt: "Thời trang Routine thiết kế chuẩn form vóc dáng người Việt Á Đông",
-                        },
-                    ].map((item, idx) => (
-                        <article key={idx} className={`bs-row ${idx % 2 === 1 ? "bs-row--reverse" : ""}`}>
-                            <motion.div
-                                className="bs-img-wrap"
-                                initial={{ opacity: 0, x: idx % 2 === 0 ? -60 : 60 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true, amount: 0.3 }}
-                                transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
-                            >
-                                <img src={item.img} alt={item.alt} loading="lazy" />
-                                <div className="bs-img-num" aria-hidden="true">0{idx + 1}</div>
-                            </motion.div>
-
-                            <motion.div
-                                className="bs-text-wrap"
-                                initial={{ opacity: 0, y: 40 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, amount: 0.3 }}
-                                transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.15 }}
-                            >
-                                <span className="bs-tag">{item.tag}</span>
-                                <h3 className="bs-heading">{item.heading}</h3>
-                                <div className="bs-rule" />
-                                <p className="bs-body">{item.body}</p>
-                            </motion.div>
-                        </article>
-                    ))}
-                </section>
-
-                {/* PPT MORPH: HORIZONTAL SCROLL LATEST DROPS */}
-                <section ref={horizontalRef} className="ppt-horizontal-section">
-                    <div className="sticky-horizontal-container">
-                        <motion.h2
-                            className="huge-bg-text"
-                            style={{ x: horizontalBgText }}
-                        >
-                            LATEST DROPS / EDITION 2026
-                        </motion.h2>
-
-                        <motion.div
-                            style={{ x: horizontalScroll }}
-                            className="horizontal-track"
-                        >
-                            <div className="horizontal-intro">
-                                <div className="intro-badge">01 // NEW ARRIVALS</div>
-                                <h3>The<br />New<br />Standard.</h3>
-                                <p>Sự kết hợp hoàn hảo giữa thiết kế đương đại và chất liệu bền vững. Cuộn để khám phá sự chuyển mình của thời trang.</p>
-                                <img src="https://i.pinimg.com/736x/8f/c9/77/8fc977a41d063717fc8a504a500b4119.jpg" alt="Editorial Fashion" className="intro-image" />
-                            </div>
-
-                            {product.slice(0, 4).map((item, idx) => (
-                                <motion.article
-                                    key={item.id}
-                                    className="horizontal-card-wrapper"
-                                    whileHover={{ scale: 1.05, rotateY: -5, zIndex: 10 }}
-                                    transition={{ type: "spring", stiffness: 300 }}
-                                >
-                                    <ProductCard product={item} />
-                                </motion.article>
-                            ))}
-
-                            <div className="horizontal-outro">
-                                <h3>View<br />More<br />Collection <span className="arrow">→</span></h3>
-                            </div>
-                        </motion.div>
-                    </div>
-                </section>
-
-                {/* OFFICE COLLECTION — nền sáng, chuẩn SEO, scroll reveal */}
-                <section
-                    ref={clipRef}
-                    className="office-section"
-                    aria-label="Bộ sưu tập thời trang công sở Routine SS 2026"
-                >
-                    <div className="office-sticky">
-
-                        {/* Label + heading reveal khi scroll vào */}
-                        <div className="office-intro">
-                            <motion.span
-                                className="office-eyebrow"
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true, amount: 0.5 }}
-                                transition={{ duration: 0.7 }}
-                            >
-                                Bộ sưu tập SS 2026
-                            </motion.span>
-                            <div className="office-title-mask">
-                                <motion.h2
-                                    className="office-title"
-                                    style={{ y: useTransform(clipProgress, [0, 0.25], [80, 0]), opacity: useTransform(clipProgress, [0, 0.2], [0, 1]) }}
-                                >
-                                    Thời trang<br /><em>công sở</em>
-                                </motion.h2>
-                            </div>
-                            <motion.p
-                                className="office-seo-lead"
-                                style={{ y: useTransform(clipProgress, [0.1, 0.3], [40, 0]), opacity: useTransform(clipProgress, [0.1, 0.28], [0, 1]) }}
-                            >
-                                Bộ sưu tập thời trang công sở Routine SS 2026 được thiết kế dành riêng
-                                cho người Việt hiện đại — chuyên nghiệp, năng động và tự tin trong
-                                mọi không gian làm việc.
-                            </motion.p>
                         </div>
 
-                        {/* Split: ảnh trái + danh sách đặc điểm phải */}
-                        <div className="office-split">
+                        <div className="hero-image hero-animate hero-animate--delay">
+                            <img
+                                src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&q=80"
+                                alt="Bộ sưu tập thời trang Routine 2026"
+                                width="600"
+                                height="750"
+                                loading="eager"
+                                fetchPriority="high"
+                            />
+                        </div>
+                    </div>
+                </section>
 
-                            {/* Ảnh với parallax nhẹ */}
-                            <motion.div
-                                className="office-img-col"
-                                style={{ y: useTransform(clipProgress, [0.2, 0.9], [0, -60]) }}
-                            >
-                                <img
-                                    src="https://img.vuahanghieu.com/unsafe/0x0/left/top/smart/filters:quality(90)/https://admin.vuahanghieu.com/upload/news/content/2025/05/shop-mua-do-cong-so-nu-tai-ha-noi-16-jpg-1747722219-20052025132339.jpg"
-                                    alt="Bộ sưu tập thời trang công sở Routine SS 2026 — áo len mỏng thanh lịch"
-                                    loading="lazy"
-                                />
-                                <motion.div
-                                    className="office-img-badge"
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    whileInView={{ opacity: 1, scale: 1 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.6, delay: 0.4 }}
-                                >
-                                    <span className="oib-num">240<sup>+</sup></span>
-                                    <span className="oib-label">Mẫu thiết kế<br />mỗi mùa</span>
-                                </motion.div>
-                            </motion.div>
-
-                            {/* Nội dung đặc điểm sản phẩm */}
-                            <div className="office-info-col">
-                                <motion.p
-                                    className="office-desc"
-                                    initial={{ opacity: 0, y: 30 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true, amount: 0.3 }}
-                                    transition={{ duration: 0.8 }}
-                                >
-                                    Mỗi thiết kế trong bộ sưu tập công sở của Routine đều được nghiên cứu
-                                    từ nhu cầu thực tế: form dáng tôn vóc, chất liệu cao cấp chịu được
-                                    môi trường văn phòng cả ngày dài.
-                                </motion.p>
-
-                                {/* Feature list — chuẩn SEO với ul/li thật */}
-                                <ul className="office-features" aria-label="Đặc điểm nổi bật bộ sưu tập công sở">
-                                    {[
-                                        { icon: "✦", title: "Chống nhăn vĩnh cửu", desc: "Công nghệ xử lý nhiệt giúp vải luôn phẳng mịn suốt 8 tiếng văn phòng." },
-                                        { icon: "✦", title: "Thoáng khí 4 chiều", desc: "Sợi vải thoát ẩm nhanh, giữ cơ thể khô thoáng trong không gian điều hòa." },
-                                        { icon: "✦", title: "Form chuẩn vóc Á Đông", desc: "Được đo cắt riêng theo tỷ lệ cơ thể người Việt — vai, eo, chiều dài chuẩn." },
-                                        { icon: "✦", title: "Bền màu 50+ lần giặt", desc: "Màu sắc giữ nguyên sau nhiều lần giặt nhờ thuốc nhuộm sinh thái cao cấp." },
-                                    ].map((feat, i) => (
-                                        <motion.li
-                                            key={i}
-                                            className="office-feat-item"
-                                            initial={{ opacity: 0, x: 30 }}
-                                            whileInView={{ opacity: 1, x: 0 }}
-                                            viewport={{ once: true, amount: 0.4 }}
-                                            transition={{ duration: 0.6, delay: i * 0.12 }}
-                                        >
-                                            <span className="ofi-icon" aria-hidden="true">{feat.icon}</span>
-                                            <div>
-                                                <strong className="ofi-title">{feat.title}</strong>
-                                                <p className="ofi-desc">{feat.desc}</p>
+                {/* ── CATEGORIES ── */}
+                <section className="categories-section reveal" ref={categoriesRef}>
+                    <div className="category-grid container my-5">
+                        <h2 className="text-center fs-1 fw-bold py-5">Danh mục sản phẩm</h2>
+                        <div className="row g-4">
+                            {categories.map((cat) => (
+                                <div className="col-lg-3 col-md-4 col-sm-6 col-6" key={cat.id}>
+                                    <Link to={cat.link} className="text-decoration-none">
+                                        <div className="category-card">
+                                            <div className="w-image">
+                                                <img src={cat.imgSrc} alt={`Danh mục ${cat.title}`} />
                                             </div>
-                                        </motion.li>
-                                    ))}
-                                </ul>
-
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.7, delay: 0.5 }}
-                                >
-                                    <Link to="/products?category=officee" className="office-cta">
-                                        Xem toàn bộ bộ sưu tập công sở
-                                        <span className="office-cta-arrow">→</span>
+                                            <div className="category-info text-center py-3">
+                                                <h3 className="category-title">{cat.title}</h3>
+                                            </div>
+                                        </div>
                                     </Link>
-                                </motion.div>
-                            </div>
+                                </div>
+                            ))}
                         </div>
-
+                    </div>
+                </section>
+                <section className="brand">
+                    <h2 className="text-center fs-1 fw-bold py-5">Thương hiệu</h2>
+                    <div className="container">
+                        <div className="row justify-content-center">
+                            {brands.map((brand) => (
+                                <div className="brand-item col-md-2 col-4" key={brand.id}>
+                                    <Link to={`/products/all/${brand.slug}`}>
+                                        <div className="brand-card rounded-circle d-flex flex-column align-items-center">
+                                            <img className="rounded-circle w-50 h-50" src={brand.logo} alt={brand.name} />
+                                            <h3 className="title-brand mt-3 fs-6 text-dark">{brand.name}</h3>
+                                        </div>
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </section>
 
-                {/* PPT MORPH: MAGIC LAYOUT COLLECTIONS */}
-                <section className="ppt-collections-section">
-                    <div className="collections-editorial">
-                        <img
-                            src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80"
-                            alt="Collection Lookbook"
-                            className="editorial-cover"
-                        />
-                        <div className="editorial-text-box">
-                            <h2>DISCOVER<br />THE CORE.</h2>
-                            <p>Khám phá toàn bộ hệ sinh thái sản phẩm của Routine. Từ những chiếc áo sơ mi basic đến những bộ suit cắt may tỉ mỉ.</p>
-                        </div>
-                    </div>
+                {/* ── FEATURED PRODUCTS ── */}
+                <section className="featured-products-section reveal" ref={productsRef}>
+                    <div className="section-container">
+                        <header className="section-header">
+                            <h2>Sản Phẩm Nổi Bật</h2>
+                            <p>Những thiết kế được yêu thích nhất tại Routine</p>
+                        </header>
 
-                    <div className="collections-main-grid">
-                        <div className="ppt-header">
-                            <div aria-label="Bộ lọc sản phẩm" className="semantic-nav">
-                                <ul className="fluid-filter">
-                                    {["all", "shirt", "pants", 1, "accessories"].map((cat) => (
-                                        <li key={cat}>
-                                            <button
-                                                onClick={() => {
-                                                    const val = cat === 1 ? 1 : cat;
-                                                    setListProduct(val);
-                                                    setViewMore(cat === 1 ? "dress" : cat);
-                                                }}
-                                                className={listProduct === (cat === 1 ? 1 : cat) ? "active" : ""}
-                                            >
-                                                {listProduct === (cat === 1 ? 1 : cat) && (
-                                                    <motion.div
-                                                        layoutId="activeFilterBg"
-                                                        className="filter-bg-pill"
-                                                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                                    />
-                                                )}
-                                                <span className="filter-text">
-                                                    {cat === "all" ? "Tất cả" :
-                                                        cat === "shirt" ? "Áo sơ mi" :
-                                                            cat === "pants" ? "Quần" :
-                                                                cat === 1 ? "Váy" : "Phụ kiện"}
-                                                </span>
-                                            </button>
+                        {loading ? (
+                            <div className="loading-state" aria-live="polite">
+                                <p>Đang tải sản phẩm…</p>
+                            </div>
+                        ) : (
+                            <>
+                                <ul className="products-grid" role="list">
+                                    {featuredProducts.map((product) => (
+                                        <li key={product.id} className="product-item">
+                                            <ProductCard product={product} />
                                         </li>
                                     ))}
                                 </ul>
-                            </div>
-                        </div>
-
-                        <motion.div layout className="ppt-grid">
-                            <AnimatePresence mode="popLayout">
-                                {filter.slice(0, 8).map((item) => (
-                                    <motion.article
-                                        key={item.id}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
-                                        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                                        exit={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
-                                        transition={{ type: "spring", stiffness: 150, damping: 22, mass: 0.8 }}
-                                        className="ppt-item"
-                                    >
-                                        <ProductCard product={item} />
-                                    </motion.article>
-                                ))}
-                            </AnimatePresence>
-                        </motion.div>
-
-
-                        {filter.length > 8 && (
-                            <div className="view-more-bento">
-                                <Link to={`/products?category=${viewMore}`} className="cta-button-luxury">
-                                    XEM TOÀN BỘ SẢN PHẨM
-                                </Link>
-                            </div>
+                                <div className="section-footer">
+                                    <Link to="/products" className="btn-view-all">
+                                        Xem Tất Cả Sản Phẩm
+                                        <span className="arrow" aria-hidden="true">→</span>
+                                    </Link>
+                                </div>
+                            </>
                         )}
                     </div>
                 </section>
+
+                {/* ── FEATURES ── */}
+                <section className="features-section reveal" ref={featuresRef}>
+                    <div className="section-container">
+                        <header className="section-header">
+                            <h2>Tại Sao Chọn Routine?</h2>
+                        </header>
+
+                        <ul className="features-grid" role="list">
+                            {[
+                                {
+                                    icon: "✦",
+                                    title: "Chất Liệu Cao Cấp",
+                                    desc: "Sợi bã cà phê, sợi tre tự nhiên và Repreve tái chế – thân thiện môi trường, bền bỉ theo thời gian.",
+                                },
+                                {
+                                    icon: "✦",
+                                    title: "Thiết Kế Tôn Dáng",
+                                    desc: "Form cắt nghiên cứu theo tỷ lệ cơ thể người Việt, tôn vinh vóc dáng Á Đông một cách hoàn hảo.",
+                                },
+                                {
+                                    icon: "✦",
+                                    title: "Bền Màu Lâu Dài",
+                                    desc: "Công nghệ nhuộm sinh thái cao cấp giúp màu sắc giữ nguyên sau 50+ lần giặt.",
+                                },
+                                {
+                                    icon: "✦",
+                                    title: "Thoải Mái Cả Ngày",
+                                    desc: "Vải chống nhăn, thoáng khí 4 chiều, thoát ẩm nhanh – thoải mái suốt 8 tiếng làm việc.",
+                                },
+                            ].map((f) => (
+                                <li key={f.title} className="feature-card">
+                                    <div className="feature-icon" aria-hidden="true">{f.icon}</div>
+                                    <h3>{f.title}</h3>
+                                    <p>{f.desc}</p>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </section>
+
+                {/* ── ABOUT ── */}
+                <section className="about-section reveal" ref={aboutRef}>
+                    <div className="section-container">
+                        <div className="about-content">
+                            <div className="about-text">
+                                <h2>Về Routine</h2>
+                                <p>
+                                    Routine.vn không chỉ là một nền tảng thời trang, mà là không gian
+                                    nghệ thuật nơi phong cách thanh lịch và nhịp sống hiện đại giao thoa.
+                                </p>
+                                <p>
+                                    Đại diện cho tư duy "Look Smart" – tinh giản, sắc sảo, đầy tính ứng
+                                    dụng – chúng tôi mang lăng kính mới về thời trang Việt Nam cao cấp,
+                                    tôn vinh vóc dáng người Á Đông.
+                                </p>
+                                <Link to="/about" className="btn-learn-more">
+                                    Tìm Hiểu Thêm <span aria-hidden="true">→</span>
+                                </Link>
+                            </div>
+                            <div className="about-image">
+                                <img
+                                    src="https://img.vietcetera.com/uploads/images/12-aug-2021/anyconv.com-.jpeg"
+                                    alt="Xưởng may Routine – thời trang cao cấp Việt Nam"
+                                    width="400"
+                                    height="500"
+                                    loading="lazy"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ── CTA ── */}
+                <section className="cta-section reveal" ref={ctaRef} aria-label="Đăng ký nhận ưu đãi">
+                    <div className="cta-container">
+                        <h2>Bắt Đầu Hành Trình Thời Trang Của Bạn</h2>
+                        <p>Đăng ký nhận thông tin về bộ sưu tập mới và ưu đãi đặc biệt</p>
+                        <Link to="/products" className="btn-cta-large">
+                            Khám Phá Ngay
+                        </Link>
+                    </div>
+                </section>
+
             </main>
+
             <Footer />
         </div>
     );

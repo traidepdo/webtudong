@@ -18,11 +18,13 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-helmet-async": "^3.0.0",
+    "react-quill-new": "^3.8.3",
     "react-router-dom": "^7.14.1",
     "typewriter-effect": "^2.22.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@types/js-cookie": "^3.0.6",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",

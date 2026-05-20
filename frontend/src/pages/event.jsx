@@ -1,5 +1,5 @@
 import Header from "../components/Header";
-import Footer from "../components/footer";
+import Footer from "../components/Footer";
 import { useState, useEffect } from "react";
 import "../App.css"
 import aos from "aos";

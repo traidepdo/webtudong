@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from 'react-helmet-async';
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -23,8 +24,12 @@ import OrderAdmin from "./pages/admin/Orders";
 import ProductChat from './components/ProductChat';
 import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
-import Blog from "./pages/blog";
-
+import Blog from "./pages/Blog";
+import BlogList from "./pages/BlogList";
+import BlogPostDetail from "./pages/BlogPostDetail";
+import NotFound from "./pages/NotFound";
+import Contact from "./pages/Contact";
+import Search from "./pages/Search";
 function GlobalChat() {
   const location = useLocation();
   // Ẩn chat global nếu đang ở trang chi tiết sản phẩm (trang đó sẽ tự render để lấy color/size)
@@ -66,8 +71,9 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <CartProvider>
+    <HelmetProvider>
+      <AuthProvider>
+        <CartProvider>
         <BrowserRouter>
           <Routes>
             {/* User Routes */}
@@ -75,13 +81,19 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/:categorySlug/:slug" element={<ProductDetail />} />
-            <Route path="/products" element={<Products />} />
+            <Route path="/products" element={<Navigate to="/products/all" replace />} />
+            <Route path="/products/:categorySlug" element={<Products />} />
+            <Route path="/products/:categorySlug/:brandSlug" element={<Products />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/event" element={<Event />} />
             <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/order-history" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
             <Route path="/order-detail/:id" element={<OrderDetail />} />
-            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog" element={<BlogList />} />
+            <Route path="/blog/:slug" element={<BlogPostDetail />} />
+            <Route path="/contact" element={<Contact />} />
+
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin-dashboard" element={
@@ -125,17 +137,24 @@ function App() {
                 <AdminDashboard initialSection="reviews" />
               </ProtectedRoute>
             } />
+            <Route path="/admin/blogs" element={
+              <ProtectedRoute adminOnly={true}>
+                <AdminDashboard initialSection="blogs" />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/users" element={
               <ProtectedRoute adminOnly={true}>
                 <AdminDashboard initialSection="users" />
               </ProtectedRoute>
             } />
+            <Route path="/404" element={<NotFound />} />
           </Routes>
           <GlobalChat />
 
         </BrowserRouter>
-      </CartProvider>
-    </AuthProvider>
+        </CartProvider>
+      </AuthProvider>
+    </HelmetProvider>
   );
 }
 

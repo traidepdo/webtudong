@@ -114,7 +114,7 @@ function Checkout() {
             <Header scrolled={true} />
             <main className="checkout-container">
                 <div className="checkout-form-section">
-                    <h2>Thông tin giao hàng</h2>
+                    <h2 className='text-2xl text-dark fw-bold mb-4'>Thông tin giao hàng</h2>
                     <form onSubmit={handleSubmit} className="checkout-form">
                         <div className="form-group">
                             <label>Họ và tên</label>
@@ -163,7 +163,7 @@ function Checkout() {
                                         checked={formData.paymentMethod === 'cod'}
                                         onChange={handleInputChange}
                                     />
-                                    <span>Thanh toán khi nhận hàng (COD)</span>
+                                    <span className='text-dark fw-bold'>Thanh toán khi nhận hàng (COD)</span>
                                 </label>
                                 <label className={`method-item ${formData.paymentMethod === 'vnpay' ? 'active' : ''}`}>
                                     <input
@@ -173,7 +173,7 @@ function Checkout() {
                                         checked={formData.paymentMethod === 'vnpay'}
                                         onChange={handleInputChange}
                                     />
-                                    <span>VNPay</span>
+                                    <span className='text-dark fw-bold'>VNPay</span>
                                 </label>
                                 <label className={`method-item ${formData.paymentMethod === 'momo' ? 'active' : ''}`}>
                                     <input
@@ -183,7 +183,7 @@ function Checkout() {
                                         checked={formData.paymentMethod === 'momo'}
                                         onChange={handleInputChange}
                                     />
-                                    <span>Ví MOMO</span>
+                                    <span className='text-dark fw-bold'>Ví MOMO</span>
                                 </label>
                             </div>
                         </div>

@@ -88,7 +88,33 @@ class Size(models.Model):
     def __str__(self):
         return self.name
 
+# ==========================================
+# THƯƠNG HIỆU (BRAND)
+# ==========================================
 
+class Brand(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
+    logo = models.ImageField(upload_to='brands/', blank=True, null=True)
+    description = models.TextField(blank=True)
+    # lưu địa chỉ trang web chính
+    website = models.URLField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.name)
+            slug = base
+            counter = 1
+            while Brand.objects.filter(slug=slug).exists():
+                slug = f"{base}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 # ==========================================
 # SẢN PHẨM GỐC
 # ==========================================
@@ -106,7 +132,14 @@ class Product(models.Model):
     meta_title = models.CharField(max_length=70, blank=True, help_text="Để trống = dùng name.")
     meta_description = models.CharField(max_length=160, blank=True)
     # Brand giúp schema.org Product đầy đủ hơn → Google hiểu ngữ cảnh tốt hơn
-    brand = models.CharField(max_length=100, blank=True, help_text="Thương hiệu sản phẩm, dùng cho schema.org")
+    brand = models.ForeignKey(
+        Brand,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products',
+        help_text="Thương hiệu sản phẩm"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)  # Schema.org cần updated_at
@@ -459,3 +492,130 @@ class Review(models.Model):
             return False, "Bạn đã đánh giá sản phẩm này rồi."
 
         return True, "OK"
+
+
+# ==========================================
+# PHẦN 4: BLOG
+# ==========================================
+
+class BlogCategory(models.Model):
+    """Danh mục bài viết (VD: Xu hướng, Phong cách, Chăm sóc trang phục)"""
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = 'Blog Category'
+        verbose_name_plural = 'Blog Categories'
+        ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.name)
+            slug = base
+            counter = 1
+            while BlogCategory.objects.filter(slug=slug).exists():
+                slug = f"{base}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class BlogPost(models.Model):
+    STATUS_CHOICES = (
+        ('draft', 'Bản nháp'),
+        ('published', 'Đã đăng'),
+    )
+
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+
+    author = models.ForeignKey(
+        User, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='blog_posts'
+    )
+    category = models.ForeignKey(
+        BlogCategory, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='posts'
+    )
+    # Sản phẩm liên quan — dùng để cross-sell trong bài viết
+    related_products = models.ManyToManyField(
+        Product, blank=True, related_name='blog_posts'
+    )
+
+    thumbnail = models.ImageField(upload_to='blog/thumbnails/', blank=True, null=True)
+    content = models.TextField()  # HTML / Markdown từ editor
+    excerpt = models.TextField(
+        blank=True,
+        help_text="Tóm tắt ngắn hiển thị ở trang danh sách. Để trống sẽ tự cắt từ content."
+    )
+
+    # SEO
+    meta_title = models.CharField(max_length=70, blank=True, help_text="Để trống = dùng title.")
+    meta_description = models.CharField(max_length=160, blank=True)
+
+    # Appearance
+    banner_color = models.CharField(max_length=20, blank=True, default="#0d0d0d")
+    font_family = models.CharField(max_length=30, blank=True, default="georgia")
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft', db_index=True)
+    views = models.PositiveIntegerField(default=0, editable=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-published_at', '-created_at']
+        indexes = [
+            models.Index(fields=['slug']),
+            models.Index(fields=['status', 'published_at']),
+        ]
+
+    def save(self, *args, **kwargs):
+        # Tự tạo slug
+        if not self.slug:
+            base = slugify(self.title)
+            slug = base
+            counter = 1
+            while BlogPost.objects.filter(slug=slug).exists():
+                slug = f"{base}-{counter}"
+                counter += 1
+            self.slug = slug
+
+        # Tự set published_at khi chuyển sang published lần đầu
+        if self.status == 'published' and not self.published_at:
+            self.published_at = timezone.now()
+
+        super().save(*args, **kwargs)
+
+    def get_excerpt(self):
+        if self.excerpt:
+            return self.excerpt
+        # Tự cắt 200 ký tự đầu từ content (bỏ HTML tags)
+        import re
+        clean = re.sub(r'<[^>]+>', '', self.content)
+        return clean[:200].strip() + ('...' if len(clean) > 200 else '')
+
+    def get_meta_title(self):
+        return self.meta_title or self.title
+
+    def __str__(self):
+        return self.title
+
+
+class BlogComment(models.Model):
+    """Bình luận bài viết — không cần mua hàng, chỉ cần đăng nhập"""
+    post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blog_comments')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} → {self.post.title[:40]}"

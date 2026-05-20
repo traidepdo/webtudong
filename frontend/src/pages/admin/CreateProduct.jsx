@@ -16,6 +16,7 @@ export default function CreateProduct() {
     const [categories, setCategories] = useState([]);
     const [colors, setColors] = useState([]);
     const [sizes, setSizes] = useState([]);
+    const [brands, setBrands] = useState([]);
 
     const [form, setForm] = useState({
         name: "", category: "", description: "",
@@ -34,6 +35,7 @@ export default function CreateProduct() {
         api.get("/categories/").then(r => setCategories(r.data?.results ?? r.data ?? [])).catch(() => { });
         api.get("/colors/").then(r => setColors(r.data?.results ?? r.data ?? [])).catch(() => { });
         api.get("/sizes/").then(r => setSizes(r.data?.results ?? r.data ?? [])).catch(() => { });
+        api.get("/brands/").then(r => setBrands(r.data?.results ?? r.data ?? [])).catch(() => { });
     }, []);
 
     // ── Form helpers ─────────────────────────────────────────
@@ -221,12 +223,16 @@ export default function CreateProduct() {
                                     </Field>
 
                                     <Field label="Thương hiệu">
-                                        <input
+                                        <select
                                             value={form.brand}
                                             onChange={e => setField("brand", e.target.value)}
-                                            placeholder="VD: Nike, Adidas..."
                                             style={inputStyle()}
-                                        />
+                                        >
+                                            <option value="">-- Chọn thương hiệu --</option>
+                                            {brands.map(b => (
+                                                <option key={b.id} value={b.id}>{b.name}</option>
+                                            ))}
+                                        </select>
                                     </Field>
 
                                     <Field label="Mô tả">

@@ -6,12 +6,12 @@ import api from '../api';
 import { useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
 import ListProduct from '../components/ListProduct';
-import '../product.css';
 import '../App.css';
 import ProductChat from '../components/ProductChat';
 import ProductReview from '../components/ProductReview';
 import DetailPageSEO from '../components/DetailPageSEO';
 import '../detail.css';
+import '../styles/ProductsDetail.css';
 
 const ProductDetail = () => {
     const { slug } = useParams();
@@ -154,147 +154,150 @@ const ProductDetail = () => {
                 baseUrl={window.location.origin}
             />
             <Header scrolled={true} />
-            <main className="product-detail-container">
-                <div className="product-gallery">
-                    <div className="main-image-box">
-                        <img src={mainImage} alt={product.name} />
-                    </div>
-                    <div className="thumbnail-list">
-                        {product.images.map((img, idx) => (
-                            <div
-                                key={idx}
-                                className={`thumbnail ${mainImage === img.image ? 'active' : ''}`}
-                                onClick={() => { setMainImage(img.image); getpriceimage(img.variant) }}
-                            >
-                                <img src={img.image} alt="" />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="product-info-section">
-                    <nav className="breadcrumb">
-                        <Link to="/">Trang chủ</Link> / <Link to={`/products?category=${product.category_slug}`}>{product.category_name}</Link> / <span>{product.name}</span>
+            <main className="product-main mt-5">
+                <div className="container">
+                    <nav className="breadcrumb m-0 my-3">
+                        <Link to="/">Trang chủ</Link> / <Link to={`/products/${product.category_slug}`}>{product.category_name}</Link> / <Link to={`/products/${product.category_slug}/${product.brand_slug}`}>{product.brand_name}</Link> / <span>{product.name}</span>
                     </nav>
-                    <h1 className="detail-name">{product.name}</h1>
-                    <div className="detail-price">{formatPrice(price)}</div>
-
-                    <div className="detail-description">
-                        <h3>Mô tả sản phẩm</h3>
-                        <p>{product.description || "Chưa có mô tả cho sản phẩm này."}</p>
-                    </div>
-
-                    {/* Màu sắc */}
-                    {colors.length > 0 && (
-                        <div className="selection-group">
-                            <h3>Màu sắc</h3>
-                            <div className="options-grid">
-                                {colors.map((colorId) => {
-                                    // Nếu đã chọn size → chỉ hiện màu có size đó
-                                    const available = selectedSize
-                                        ? product.variants.some(v => v.color === colorId && v.size === selectedSize)
-                                        : true;
-
-                                    return (
-                                        <button
-                                            key={colorId}
-                                            className={`option-btn ${selectedColor === colorId ? 'active' : ''} ${!available ? 'disabled' : ''}`}
-                                            onClick={() => {
-                                                if (!available) return;
-
-                                                if (selectedColor === colorId) {
-                                                    setSelectedColor(null);
-                                                }
-                                                else {
-                                                    setSelectedColor(colorId);
-                                                    image_change(colorId);
-                                                    getprice(colorId);
-                                                }
-                                            }}
-                                            style={{ opacity: available ? 1 : 0.35, cursor: available ? 'pointer' : 'not-allowed' }}
+                    <div className="row">
+                        <div className="col-md-6 col-12">
+                            <div className="product-gallery d-flex flex-column">
+                                <div className="main-image-box">
+                                    <img src={mainImage} alt={product.name} />
+                                </div>
+                                <div className="thumbnail-list">
+                                    {product.images.map((img, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`thumbnail ${mainImage === img.image ? 'active' : ''}`}
+                                            onClick={() => { setMainImage(img.image); getpriceimage(img.variant) }}
                                         >
-                                            {product.variants.find(v => v.color === colorId)?.color_name}
-                                        </button>
-                                    );
-                                })}
+                                            <img src={img.image} alt="" />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    )}
+                        <div className="col-md-6 col-12">
+                            <div className="product-info-section w-100">
+                                <h1 className="detail-name w-100 fs-1">{product.name}</h1>
+                                <div className="detail-price">{formatPrice(price)}</div>
 
-                    {/* Kích thước */}
-                    {product.variants.length > 0 && (
-                        <div className="selection-group">
-                            <h3>Kích thước</h3>
-                            <div className="options-grid">
-                                {/* Lấy tất cả size duy nhất */}
-                                {[...new Map(
-                                    product.variants.map(v => [v.size, { sizeId: v.size, sizeName: v.size_name }])
-                                ).values()].map(({ sizeId, sizeName }) => {
-                                    // Nếu đã chọn màu → chỉ hiện size có màu đó
-                                    const available = selectedColor
-                                        ? product.variants.some(v => v.size === sizeId && v.color === selectedColor)
-                                        : true;
+                                <div className="detail-description">
+                                    <h3>Mô tả sản phẩm</h3>
+                                    <p>{product.description || "Chưa có mô tả cho sản phẩm này."}</p>
+                                </div>
 
-                                    return (
-                                        <button
-                                            key={sizeId}
-                                            className={`option-btn ${selectedSize === sizeId ? 'active' : ''}`}
-                                            onClick={() => {
-                                                if (!available) return;
+                                {/* Màu sắc */}
+                                {colors.length > 0 && (
+                                    <div className="selection-group">
+                                        <h3>Màu sắc</h3>
+                                        <div className="options-grid">
+                                            {colors.map((colorId) => {
+                                                // Nếu đã chọn size → chỉ hiện màu có size đó
+                                                const available = selectedSize
+                                                    ? product.variants.some(v => v.color === colorId && v.size === selectedSize)
+                                                    : true;
 
-                                                if (selectedSize === sizeId) {
-                                                    setSelectedSize(null);
-                                                }
-                                                else {
-                                                    setSelectedSize(sizeId);
-                                                    // getprice(null,sizeId);
-                                                }
-                                            }}
-                                            style={{ opacity: available ? 1 : 0.35, cursor: available ? 'pointer' : 'not-allowed' }}
-                                        >
-                                            {sizeName}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-                    <div className="selection-group">
-                        <div className="quantity-selector">
-                            {/* <button className="quantity-btn" onClick={() => setQuantity(quantity - 1)}>-</button>
+                                                return (
+                                                    <button
+                                                        key={colorId}
+                                                        className={`option-btn ${selectedColor === colorId ? 'active' : ''} ${!available ? 'disabled' : ''}`}
+                                                        onClick={() => {
+                                                            if (!available) return;
+
+                                                            if (selectedColor === colorId) {
+                                                                setSelectedColor(null);
+                                                            }
+                                                            else {
+                                                                setSelectedColor(colorId);
+                                                                image_change(colorId);
+                                                                getprice(colorId);
+                                                            }
+                                                        }}
+                                                        style={{ opacity: available ? 1 : 0.35, cursor: available ? 'pointer' : 'not-allowed' }}
+                                                    >
+                                                        {product.variants.find(v => v.color === colorId)?.color_name}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Kích thước */}
+                                {product.variants.length > 0 && (
+                                    <div className="selection-group">
+                                        <h3>Kích thước</h3>
+                                        <div className="options-grid">
+                                            {/* Lấy tất cả size duy nhất */}
+                                            {[...new Map(
+                                                product.variants.map(v => [v.size, { sizeId: v.size, sizeName: v.size_name }])
+                                            ).values()].map(({ sizeId, sizeName }) => {
+                                                // Nếu đã chọn màu → chỉ hiện size có màu đó
+                                                const available = selectedColor
+                                                    ? product.variants.some(v => v.size === sizeId && v.color === selectedColor)
+                                                    : true;
+
+                                                return (
+                                                    <button
+                                                        key={sizeId}
+                                                        className={`option-btn ${selectedSize === sizeId ? 'active' : ''}`}
+                                                        onClick={() => {
+                                                            if (!available) return;
+
+                                                            if (selectedSize === sizeId) {
+                                                                setSelectedSize(null);
+                                                            }
+                                                            else {
+                                                                setSelectedSize(sizeId);
+                                                                // getprice(null,sizeId);
+                                                            }
+                                                        }}
+                                                        style={{ opacity: available ? 1 : 0.35, cursor: available ? 'pointer' : 'not-allowed' }}
+                                                    >
+                                                        {sizeName}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="selection-group">
+                                    <div className="quantity-selector">
+                                        {/* <button className="quantity-btn" onClick={() => setQuantity(quantity - 1)}>-</button>
                             <input type="text" value={quantity} readOnly />
                             <button className="quantity-btn" onClick={() => setQuantity(quantity + 1)}>+</button> */}
-                            <button className="quantity-btn" onClick={() => setQuantity(quantity + 1)}><i className="bi bi-plus"></i></button>
-                            <input type="text" value={quantity} onChange={e => {
-                                const val = parseInt(e.target.value);
-                                if (!isNaN(val) && val >= 1) {
-                                    setQuantity(val);
-                                }
-                                else if (e.target.value === "") {
-                                    setQuantity(0);
-                                }
-                            }} />
-                            <button className="quantity-btn" onClick={() => setQuantity(Math.max(1, quantity - 1))}><i className="bi bi-dash"></i></button>
+                                        <button className="quantity-btn" onClick={() => setQuantity(quantity + 1)}><i className="bi bi-plus"></i></button>
+                                        <input type="text" value={quantity} onChange={e => {
+                                            const val = parseInt(e.target.value);
+                                            if (!isNaN(val) && val >= 1) {
+                                                setQuantity(val);
+                                            }
+                                            else if (e.target.value === "") {
+                                                setQuantity(0);
+                                            }
+                                        }} />
+                                        <button className="quantity-btn" onClick={() => setQuantity(Math.max(1, quantity - 1))}><i className="bi bi-dash"></i></button>
+                                    </div>
+                                </div>
+
+                                <div className="purchase-actions">
+                                    <button className="add-to-cart-btn" onClick={handleAddToCart}>
+                                        Thêm vào giỏ hàng
+                                    </button>
+                                    <button className="buy-now-btn" onClick={onBuyNow}>
+                                        Mua ngay
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <div className="purchase-actions">
-                        <button className="add-to-cart-btn" onClick={handleAddToCart}>
-                            Thêm vào giỏ hàng
-                        </button>
-                        <button className="buy-now-btn" onClick={onBuyNow}>
-                            Mua ngay
-                        </button>
-                    </div>
-
-                    <div className="product-meta">
-                        <p><strong>SKU:</strong> {product.variants[0]?.sku || 'N/A'}</p>
-                        <p><strong>Danh mục:</strong> {product.category_name}</p>
-                    </div>
                 </div>
-
             </main>
-            <ListProduct category={product.category} slugged={product.slug} />
+            <div className="container">
+                <ListProduct category={product.category} slugged={product.slug} />
+            </div>
             <ProductChat
                 slug={slug}
                 productName={product.name}

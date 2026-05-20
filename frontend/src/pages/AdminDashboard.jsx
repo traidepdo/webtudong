@@ -6,6 +6,7 @@ import AdminOrders from '../components/admin/AdminOrders';
 import AdminUsers from '../components/admin/AdminUsers';
 import Category from '../components/admin/AdminCategory';
 import AdminReviews from '../components/admin/AdminReviews';
+import AdminBlog from '../components/admin/AdminBlog';
 import api from '../api';
 
 const AdminOverview = ({ user }) => {
@@ -154,6 +155,7 @@ const AdminDashboard = ({ initialSection = 'overview' }) => {
             case 'users': return 'Quản lý người dùng';
             case 'categories': return 'Quản lý danh mục';
             case 'reviews': return 'Quản lý đánh giá';
+            case 'blogs': return 'Quản lý bài viết';
             default: return 'Admin Panel';
         }
     };
@@ -214,6 +216,13 @@ const AdminDashboard = ({ initialSection = 'overview' }) => {
                             <i className="bi bi-star"></i>
                             Đánh giá
                         </li>
+                        <li
+                            className={activeSection === 'blogs' ? 'active' : ''}
+                            onClick={() => handleSectionChange('blogs', '/admin/blogs')}
+                        >
+                            <i className="bi bi-journal-text"></i>
+                            Bài viết
+                        </li>
                     </ul>
                 </nav>
                 <div className="sidebar-footer">
@@ -244,6 +253,7 @@ const AdminDashboard = ({ initialSection = 'overview' }) => {
                     {activeSection === 'users' && <AdminUsers />}
                     {activeSection === 'categories' && <Category />}
                     {activeSection === 'reviews' && <AdminReviews />}
+                    {activeSection === 'blogs' && <AdminBlog />}
                 </div>
             </main>
         </div>

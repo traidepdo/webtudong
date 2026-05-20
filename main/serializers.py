@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Category, Color, Size, Product, ProductImage, ProductVariant, Order, OrderItem, Payment, Profile, Review
+from .models import Category, Color, Size, Product, ProductImage, ProductVariant, Order, OrderItem, Payment, Profile, Review, Brand, BlogCategory, BlogPost, BlogComment
 import json
 import uuid
 
@@ -18,6 +18,12 @@ class SizeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Size
         fields = '__all__'
+
+class BrandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Brand
+        fields = ['id', 'name', 'slug', 'logo', 'description', 'website', 'is_active', 'created_at']
+        read_only_fields = ['slug', 'created_at']
 
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,6 +47,8 @@ class ProductSerializer(serializers.ModelSerializer):
     # lấy danh sách các variant của product
     variants = ProductVariantSerializer(many=True, read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
+    brand_name = serializers.CharField(source='brand.name', read_only=True)
+    brand_slug = serializers.CharField(source='brand.slug', read_only=True)
     # lấy name danh mục
     category_name = serializers.CharField(source='category.name', read_only=True)
     category_slug = serializers.CharField(source='category.slug', read_only=True)
@@ -49,7 +57,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'category', 'category_name', 'category_slug', 'name', 'slug', 
-            'description', 'brand', 'meta_title', 'meta_description',
+            'description', 'brand', 'brand_name', 'brand_slug', 'meta_title', 'meta_description',
             'created_at', 'variants', 'images'
         ]
     def create(self, validated_data):
@@ -404,3 +412,146 @@ class ReviewSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         validated_data['user'] = request.user
         return super().create(validated_data)
+
+# ==========================================
+# BLOG SERIALIZERS
+# ==========================================
+
+class BlogCategorySerializer(serializers.ModelSerializer):
+    post_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlogCategory
+        fields = ['id', 'name', 'slug', 'description', 'post_count']
+        read_only_fields = ['slug']
+
+    def get_post_count(self, obj):
+        return obj.posts.filter(status='published').count()
+
+
+class BlogCommentSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    avatar = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlogComment
+        fields = ['id', 'post', 'user', 'username', 'avatar', 'content', 'created_at']
+        read_only_fields = ['user', 'created_at']
+
+    def get_avatar(self, obj):
+        request = self.context.get('request')
+        try:
+            avatar = obj.user.profile.avatar
+            if avatar and request:
+                return request.build_absolute_uri(avatar.url)
+        except Exception:
+            pass
+        return None
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class BlogPostListSerializer(serializers.ModelSerializer):
+    """Dùng cho trang danh sách — trả ít field để nhẹ"""
+    author_name = serializers.SerializerMethodField()
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    category_slug = serializers.CharField(source='category.slug', read_only=True)
+    excerpt = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlogPost
+        fields = [
+            'id', 'title', 'slug', 'thumbnail',
+            'author_name', 'category_name', 'category_slug',
+            'excerpt', 'views', 'comment_count',
+            'published_at', 'created_at',
+        ]
+
+    def get_author_name(self, obj):
+        if obj.author:
+            full = f"{obj.author.first_name} {obj.author.last_name}".strip()
+            return full or obj.author.username
+        return 'Blue Sky'
+
+    def get_excerpt(self, obj):
+        return obj.get_excerpt()
+
+    def get_comment_count(self, obj):
+        return obj.comments.count()
+
+
+class BlogPostDetailSerializer(serializers.ModelSerializer):
+    """Dùng cho trang chi tiết — trả đầy đủ"""
+    author_name = serializers.SerializerMethodField()
+    author_avatar = serializers.SerializerMethodField()
+    category = BlogCategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=BlogCategory.objects.all(), source='category', write_only=True, required=False
+    )
+    related_products = serializers.SerializerMethodField()
+    related_product_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(), source='related_products',
+        many=True, write_only=True, required=False
+    )
+    comments = BlogCommentSerializer(many=True, read_only=True)
+    comment_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlogPost
+        fields = [
+            'id', 'title', 'slug', 'thumbnail', 'content', 'excerpt',
+            'meta_title', 'meta_description', 'status',
+            'banner_color', 'font_family',
+            'author_name', 'author_avatar',
+            'category', 'category_id',
+            'related_products', 'related_product_ids',
+            'comments', 'comment_count',
+            'views', 'published_at', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['slug', 'views', 'published_at', 'created_at', 'updated_at']
+
+    def get_author_name(self, obj):
+        if obj.author:
+            full = f"{obj.author.first_name} {obj.author.last_name}".strip()
+            return full or obj.author.username
+        return 'Blue Sky'
+
+    def get_author_avatar(self, obj):
+        request = self.context.get('request')
+        try:
+            avatar = obj.author.profile.avatar
+            if avatar and request:
+                return request.build_absolute_uri(avatar.url)
+        except Exception:
+            pass
+        return None
+
+    def get_related_products(self, obj):
+        from .serializers import ProductSerializer
+        return ProductSerializer(
+            obj.related_products.all(), many=True, context=self.context
+        ).data
+
+    def get_comment_count(self, obj):
+        return obj.comments.count()
+
+    def create(self, validated_data):
+        related_products = validated_data.pop('related_products', [])
+        post = BlogPost.objects.create(
+            author=self.context['request'].user,
+            **validated_data
+        )
+        post.related_products.set(related_products)
+        return post
+
+    def update(self, instance, validated_data):
+        related_products = validated_data.pop('related_products', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if related_products is not None:
+            instance.related_products.set(related_products)
+        return instance
