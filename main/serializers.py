@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Category, Color, Size, Product, ProductImage, ProductVariant, Order, OrderItem, Payment, Profile, Review, Brand, BlogCategory, BlogPost, BlogComment
+from .models import Category, Color, Size, Product, ProductImage, ProductVariant, Order, OrderItem, Payment, Profile, Review, Brand, BlogCategory, BlogPost, BlogComment, Notification
 import json
 import uuid
 
@@ -555,3 +555,10 @@ class BlogPostDetailSerializer(serializers.ModelSerializer):
         if related_products is not None:
             instance.related_products.set(related_products)
         return instance
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'notification_type', 'title', 'message', 'is_read', 'order', 'created_at']
+        read_only_fields = ['id', 'notification_type', 'title', 'message', 'order', 'created_at']

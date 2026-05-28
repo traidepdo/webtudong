@@ -7,7 +7,8 @@ from .views import (
     UserViewSet, AdminStatsView, ColorViewSet, SizeViewSet, ProductImageViewSet, related_products,product_chat, submit_checkout, chat_history, ReviewListCreateView, ReviewEligibilityView,
     AllReviewsViewSet,BrandViewSet,
     BlogCategoryListView, BlogPostListView, BlogPostDetailView,
-    BlogCommentListCreateView, BlogCommentDeleteView
+    BlogCommentListCreateView, BlogCommentDeleteView,
+    NotificationListView, notification_unread_count, notification_mark_read, notification_mark_all_read
 )
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
@@ -44,4 +45,10 @@ urlpatterns = [
     path('api/blog/posts/<slug:slug>/', BlogPostDetailView.as_view(), name='blog-post-detail'),
     path('api/blog/posts/<slug:slug>/comments/', BlogCommentListCreateView.as_view(), name='blog-post-comments'),
     path('api/blog/comments/<int:pk>/', BlogCommentDeleteView.as_view(), name='blog-comment-delete'),
+
+    # Notification URLs
+    path('api/notifications/', NotificationListView.as_view(), name='notification-list'),
+    path('api/notifications/unread-count/', notification_unread_count, name='notification-unread-count'),
+    path('api/notifications/<int:pk>/read/', notification_mark_read, name='notification-mark-read'),
+    path('api/notifications/mark-all-read/', notification_mark_all_read, name='notification-mark-all-read'),
 ]
