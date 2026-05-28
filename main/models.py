@@ -619,3 +619,67 @@ class BlogComment(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → {self.post.title[:40]}"
+
+
+# ==========================================
+# PHẦN 5: THÔNG BÁO (NOTIFICATION)
+# ==========================================
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('order_status', 'Cập nhật đơn hàng'),
+        ('promotion', 'Khuyến mãi'),
+        ('system', 'Hệ thống'),
+    )
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    notification_type = models.CharField(
+        max_length=20, choices=NOTIFICATION_TYPES, default='system'
+    )
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False, db_index=True)
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE,
+        null=True, blank=True, related_name='notifications'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.title}"
+
+
+ORDER_STATUS_MESSAGES = {
+    'pending': ('Đơn hàng đang chờ xử lý', 'Đơn hàng #{order_id} của bạn đã được tiếp nhận và đang chờ xử lý.'),
+    'processing': ('Đơn hàng đang được chuẩn bị', 'Đơn hàng #{order_id} của bạn đang được chuẩn bị hàng.'),
+    'shipped': ('Đơn hàng đang giao', 'Đơn hàng #{order_id} của bạn đang được vận chuyển.'),
+    'delivered': ('Đơn hàng đã giao thành công', 'Đơn hàng #{order_id} đã giao thành công. Cảm ơn bạn đã mua hàng!'),
+    'cancelled': ('Đơn hàng đã bị hủy', 'Đơn hàng #{order_id} của bạn đã bị hủy.'),
+}
+
+
+@receiver(post_save, sender=Order)
+def create_order_notification(sender, instance, created, **kwargs):
+    if not instance.user:
+        return
+    status = instance.status
+    if status in ORDER_STATUS_MESSAGES:
+        title_tpl, message_tpl = ORDER_STATUS_MESSAGES[status]
+        title = title_tpl
+        message = message_tpl.format(order_id=instance.id)
+        Notification.objects.create(
+            user=instance.user,
+            notification_type='order_status',
+            title=title,
+            message=message,
+            order=instance,
+        )

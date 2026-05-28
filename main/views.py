@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, generics, permissions, filters
-from .models import Category, Product, ProductVariant, Order, Color, Size, ProductImage, ChatMessage, OrderItem, Review, Brand, BlogPost, BlogCategory, BlogComment
-from .serializers import CategorySerializer, ProductSerializer, ProductVariantSerializer, OrderSerializer, UserSerializer, RegisterSerializer, ColorSerializer, SizeSerializer, ProductImageSerializer, ReviewSerializer, BrandSerializer, BlogPostListSerializer, BlogPostDetailSerializer, BlogCommentSerializer, BlogCategorySerializer
+from .models import Category, Product, ProductVariant, Order, Color, Size, ProductImage, ChatMessage, OrderItem, Review, Brand, BlogPost, BlogCategory, BlogComment, Notification
+from .serializers import CategorySerializer, ProductSerializer, ProductVariantSerializer, OrderSerializer, UserSerializer, RegisterSerializer, ColorSerializer, SizeSerializer, ProductImageSerializer, ReviewSerializer, BrandSerializer, BlogPostListSerializer, BlogPostDetailSerializer, BlogCommentSerializer, BlogCategorySerializer, NotificationSerializer
 from django.contrib.auth.models import User
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -966,3 +966,41 @@ class BlogCommentDeleteView(generics.DestroyAPIView):
             return BlogComment.objects.all()
         # Người dùng thường chỉ xóa được comment của mình
         return BlogComment.objects.filter(user=user)
+
+
+# ==========================================
+# API THÔNG BÁO (NOTIFICATION)
+# ==========================================
+
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def notification_unread_count(request):
+    count = Notification.objects.filter(user=request.user, is_read=False).count()
+    return Response({'unread_count': count})
+
+
+@api_view(['PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def notification_mark_read(request, pk):
+    try:
+        notification = Notification.objects.get(pk=pk, user=request.user)
+    except Notification.DoesNotExist:
+        return Response({'error': 'Không tìm thấy thông báo'}, status=404)
+    notification.is_read = True
+    notification.save()
+    return Response({'status': 'ok'})
+
+
+@api_view(['PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def notification_mark_all_read(request):
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return Response({'status': 'ok'})

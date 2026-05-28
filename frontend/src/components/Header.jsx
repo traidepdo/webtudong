@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { NavLink } from "react-router-dom";
 import "../styles/Header.css";
+import NotificationDropdown from "./NotificationDropdown";
 
 function Header({ scrolled }) {
     const { user, logout } = useAuth();
@@ -47,6 +48,8 @@ function Header({ scrolled }) {
                     </div>
 
                     <div className="user-actions">
+                        {user && <NotificationDropdown />}
+
                         <Link to="/checkout" className="cart-icon-nav" title="Giỏ hàng" aria-label="Giỏ hàng">
                             <i className="bi bi-bag"></i>
                             {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}

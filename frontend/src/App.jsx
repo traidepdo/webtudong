@@ -9,6 +9,7 @@ import Checkout from "./pages/Checkout";
 import Profile from "./pages/profile";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from 'react-router-dom';
 import Event from "./pages/event";
@@ -74,6 +75,7 @@ function App() {
     <HelmetProvider>
       <AuthProvider>
         <CartProvider>
+        <NotificationProvider>
         <BrowserRouter>
           <Routes>
             {/* User Routes */}
@@ -152,6 +154,7 @@ function App() {
           <GlobalChat />
 
         </BrowserRouter>
+        </NotificationProvider>
         </CartProvider>
       </AuthProvider>
     </HelmetProvider>
